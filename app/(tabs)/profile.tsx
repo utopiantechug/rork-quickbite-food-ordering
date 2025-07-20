@@ -1,5 +1,5 @@
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { LogOut, Settings, User, Shield, Package, Plus } from 'lucide-react-native';
+import { LogOut, Settings, User, Shield, Package, Plus, Users } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useBakeryStore } from '@/store/bakery-store';
 
@@ -58,6 +58,11 @@ export default function ProfileScreen() {
         <Pressable style={styles.menuItem} onPress={() => router.push('/products')}>
           <Package size={24} color="#6B5B73" />
           <Text style={styles.menuText}>Product Management</Text>
+        </Pressable>
+
+        <Pressable style={styles.menuItem} onPress={() => router.push('/customers')}>
+          <Users size={24} color="#6B5B73" />
+          <Text style={styles.menuText}>Customer Management</Text>
         </Pressable>
 
         <Pressable style={styles.menuItem} onPress={() => router.push('/order-form')}>

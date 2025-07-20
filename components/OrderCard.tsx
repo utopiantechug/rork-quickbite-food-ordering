@@ -57,7 +57,10 @@ export function OrderCard({ order }: OrderCardProps) {
       </View>
       
       <View style={styles.footer}>
-        <Text style={styles.customer}>{order.customerName}</Text>
+        <View style={styles.customerInfo}>
+          <Text style={styles.customer}>{order.customerName}</Text>
+          <Text style={styles.customerEmail}>{order.customerEmail}</Text>
+        </View>
         <Text style={styles.total}>${order.total.toFixed(2)}</Text>
       </View>
       
@@ -125,11 +128,20 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-end',
+  },
+  customerInfo: {
+    flex: 1,
   },
   customer: {
     fontSize: 14,
     color: '#6B5B73',
+    fontWeight: '500',
+  },
+  customerEmail: {
+    fontSize: 12,
+    color: '#6B5B73',
+    marginTop: 2,
   },
   total: {
     fontSize: 18,

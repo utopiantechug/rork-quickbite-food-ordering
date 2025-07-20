@@ -10,6 +10,7 @@ export default function OrderFormScreen() {
   const { products, addOrder } = useBakeryStore();
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
   const [orderItems, setOrderItems] = useState<CartItem[]>([]);
   const [deliveryDate, setDeliveryDate] = useState('');
 
@@ -61,9 +62,19 @@ export default function OrderFormScreen() {
     return formatDateForInput(tomorrow);
   };
 
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleCreateOrder = () => {
-    if (!customerName.trim() || !customerPhone.trim()) {
-      Alert.alert('Missing Information', 'Please enter customer name and phone number');
+    if (!customerName.trim() || !customerPhone.trim() || !customerEmail.trim()) {
+      Alert.alert('Missing Information', 'Please enter customer name, phone number, and email address');
+      return;
+    }
+
+    if (!validateEmail(customerEmail.trim())) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address');
       return;
     }
 
@@ -92,6 +103,7 @@ export default function OrderFormScreen() {
       status: 'pending',
       customerName: customerName.trim(),
       customerPhone: customerPhone.trim(),
+      customerEmail: customerEmail.trim(),
       deliveryDate: selectedDate,
       estimatedTime: '20-30 minutes',
     });
@@ -189,6 +201,19 @@ export default function OrderFormScreen() {
               placeholder="Enter phone number"
               placeholderTextColor="#6B5B73"
               keyboardType="phone-pad"
+            />
+          </View>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Email Address</Text>
+            <TextInput
+              style={styles.input}
+              value={customerEmail}
+              onChangeText={setCustomerEmail}
+              placeholder="Enter email address"
+              placeholderTextColor="#6B5B73"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
             />
           </View>
           <View style={styles.inputContainer}>

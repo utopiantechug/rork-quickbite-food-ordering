@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Order, Product, User } from '@/types';
+import { Order, Product, User, Customer } from '@/types';
 import { PRODUCTS } from '@/constants/products';
 
 interface BakeryState {
@@ -13,6 +13,10 @@ interface BakeryState {
   orders: Order[];
   addOrder: (order: Omit<Order, 'id' | 'orderDate'>) => void;
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
+
+  // Customers
+  customers: Customer[];
+  updateCustomers: () => void;
 
   // User
   user: User | null;
@@ -52,6 +56,9 @@ export const useBakeryStore = create<BakeryState>((set, get) => ({
       orderDate: new Date(),
     };
     set({ orders: [...get().orders, newOrder] });
+    
+    // Update customers after adding order
+    setTimeout(() => get().updateCustomers(), 0);
   },
 
   updateOrderStatus: (orderId, status) => {
@@ -60,6 +67,39 @@ export const useBakeryStore = create<BakeryState>((set, get) => ({
         order.id === orderId ? { ...order, status } : order
       )
     });
+  },
+
+  // Customers
+  customers: [],
+  updateCustomers: () => {
+    const { orders } = get();
+    const customerMap = new Map<string, Customer>();
+
+    orders.forEach(order => {
+      const key = order.customerEmail;
+      
+      if (customerMap.has(key)) {
+        const customer = customerMap.get(key)!;
+        customer.totalOrders += 1;
+        customer.totalSpent += order.total;
+        
+        if (!customer.lastOrderDate || order.orderDate > customer.lastOrderDate) {
+          customer.lastOrderDate = order.orderDate;
+        }
+      } else {
+        customerMap.set(key, {
+          id: key,
+          name: order.customerName,
+          phone: order.customerPhone,
+          email: order.customerEmail,
+          totalOrders: 1,
+          totalSpent: order.total,
+          lastOrderDate: order.orderDate,
+        });
+      }
+    });
+
+    set({ customers: Array.from(customerMap.values()) });
   },
 
   // User

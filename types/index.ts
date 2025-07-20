@@ -20,9 +20,20 @@ export interface Order {
   status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
   customerName: string;
   customerPhone: string;
+  customerEmail: string;
   orderDate: Date;
   deliveryDate: Date;
   estimatedTime?: string;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  totalOrders: number;
+  totalSpent: number;
+  lastOrderDate?: Date;
 }
 
 export interface User {

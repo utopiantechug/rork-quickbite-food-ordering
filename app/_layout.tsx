@@ -19,6 +19,8 @@ function RootLayoutNav() {
       <Stack.Screen name="products" options={{ headerShown: true }} />
       <Stack.Screen name="product-form" options={{ headerShown: true }} />
       <Stack.Screen name="order-form" options={{ headerShown: true }} />
+      <Stack.Screen name="customers" options={{ headerShown: true }} />
+      <Stack.Screen name="customer-details" options={{ headerShown: true }} />
     </Stack>
   );
 }
