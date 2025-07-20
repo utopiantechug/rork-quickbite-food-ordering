@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "QuickBite Food Ordering",
-    "slug": "quickbite-food-ordering",
+    "name": "OvenTreats",
+    "slug": "ovetreats-ug",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -15,14 +15,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.rork.quickbite-food-ordering"
+      "bundleIdentifier": "app.rork.oventreatsug"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.quickbite-food-ordering"
+      "package": "app.rork.oventreatsug"
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
