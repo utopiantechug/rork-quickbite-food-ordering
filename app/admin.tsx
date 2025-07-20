@@ -1,14 +1,30 @@
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ArrowLeft, Clock, CheckCircle, XCircle, Plus } from 'lucide-react-native';
 import { router, Stack } from 'expo-router';
+import { useState } from 'react';
 import { useBakeryStore } from '@/store/bakery-store';
 import { Order } from '@/types';
 
+const ORDER_TABS = [
+  { id: 'all', label: 'All Orders' },
+  { id: 'pending', label: 'Pending' },
+  { id: 'preparing', label: 'Preparing' },
+  { id: 'ready', label: 'Ready' },
+] as const;
+
+type TabId = typeof ORDER_TABS[number]['id'];
+
 export default function AdminScreen() {
   const { orders, updateOrderStatus } = useBakeryStore();
+  const [selectedTab, setSelectedTab] = useState<TabId>('all');
 
   const handleStatusUpdate = (orderId: string, status: Order['status']) => {
     updateOrderStatus(orderId, status);
+  };
+
+  const getFilteredOrders = () => {
+    if (selectedTab === 'all') return orders;
+    return orders.filter(order => order.status === selectedTab);
   };
 
   const getStatusIcon = (status: Order['status']) => {
@@ -33,6 +49,8 @@ export default function AdminScreen() {
       day: 'numeric'
     });
   };
+
+  const filteredOrders = getFilteredOrders();
 
   const renderOrderCard = ({ item: order }: { item: Order }) => (
     <View style={styles.orderCard}>
@@ -143,17 +161,53 @@ export default function AdminScreen() {
           </View>
         </View>
 
-        {orders.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyTitle}>No Orders Yet</Text>
-            <Text style={styles.emptyText}>Orders will appear here once they are created</Text>
-            <Pressable style={styles.createButton} onPress={() => router.push('/order-form')}>
-              <Text style={styles.createButtonText}>Create First Order</Text>
+        <View style={styles.tabsContainer}>
+          {ORDER_TABS.map((tab) => (
+            <Pressable
+              key={tab.id}
+              style={[
+                styles.tab,
+                selectedTab === tab.id && styles.tabActive
+              ]}
+              onPress={() => setSelectedTab(tab.id)}
+            >
+              <Text style={[
+                styles.tabText,
+                selectedTab === tab.id && styles.tabTextActive
+              ]}>
+                {tab.label}
+              </Text>
+              {tab.id !== 'all' && (
+                <View style={styles.tabBadge}>
+                  <Text style={styles.tabBadgeText}>
+                    {orders.filter(o => o.status === tab.id).length}
+                  </Text>
+                </View>
+              )}
             </Pressable>
+          ))}
+        </View>
+
+        {filteredOrders.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyTitle}>
+              {selectedTab === 'all' ? 'No Orders Yet' : `No ${selectedTab} Orders`}
+            </Text>
+            <Text style={styles.emptyText}>
+              {selectedTab === 'all' 
+                ? 'Orders will appear here once they are created'
+                : `${selectedTab} orders will appear here`
+              }
+            </Text>
+            {selectedTab === 'all' && (
+              <Pressable style={styles.createButton} onPress={() => router.push('/order-form')}>
+                <Text style={styles.createButtonText}>Create First Order</Text>
+              </Pressable>
+            )}
           </View>
         ) : (
           <FlatList
-            data={orders.sort((a, b) => {
+            data={filteredOrders.sort((a, b) => {
               const statusOrder = { pending: 0, preparing: 1, ready: 2, completed: 3, cancelled: 4 };
               return statusOrder[a.status] - statusOrder[b.status] || 
                      b.orderDate.getTime() - a.orderDate.getTime();
@@ -202,6 +256,51 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6B5B73',
     fontWeight: '500',
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+    gap: 8,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+    gap: 6,
+  },
+  tabActive: {
+    backgroundColor: '#D4A574',
+    borderColor: '#D4A574',
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#6B5B73',
+  },
+  tabTextActive: {
+    color: '#fff',
+  },
+  tabBadge: {
+    backgroundColor: '#F5F1EB',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
+  tabBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#D4A574',
   },
   emptyContainer: {
     flex: 1,
