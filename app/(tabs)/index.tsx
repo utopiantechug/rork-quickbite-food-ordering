@@ -3,6 +3,7 @@ import { Settings } from 'lucide-react-native';
 import { useState } from 'react';
 import { router } from 'expo-router';
 import { ProductCard } from '@/components/ProductCard';
+import { NetworkStatus } from '@/components/NetworkStatus';
 import { CATEGORIES } from '@/constants/products';
 import { useBakeryStore } from '@/store/bakery-store';
 
@@ -16,6 +17,8 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      <NetworkStatus />
+      
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Golden Crust</Text>
