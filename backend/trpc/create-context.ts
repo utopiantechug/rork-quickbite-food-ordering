@@ -1,6 +1,7 @@
 import { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
+import { ZodError } from "zod";
 
 // Context creation function
 export const createContext = async (opts: FetchCreateContextFnOptions) => {
@@ -28,7 +29,7 @@ const t = initTRPC.context<Context>().create({
       ...shape,
       data: {
         ...shape.data,
-        zodError: error.code === 'BAD_REQUEST' && error.cause?.name === 'ZodError' 
+        zodError: error.code === 'BAD_REQUEST' && error.cause instanceof ZodError 
           ? error.cause.flatten() 
           : null,
       },
