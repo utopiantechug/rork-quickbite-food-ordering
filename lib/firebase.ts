@@ -4,6 +4,11 @@ import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 
 // Replace with your Firebase config
+// To get your config:
+// 1. Go to https://console.firebase.google.com/
+// 2. Create a new project or select existing one
+// 3. Go to Project Settings > General > Your apps
+// 4. Add a web app and copy the config object
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "YOUR_AUTH_DOMAIN",

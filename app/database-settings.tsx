@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, ScrollView, Pressable } from 'react-native';
-import { Stack } from 'expo-router';
+import { View, Text, StyleSheet, Alert, ScrollView, Pressable, TouchableOpacity } from 'react-native';
+import { Stack, router } from 'expo-router';
 import { useDatabaseContext } from '@/store/database-provider';
-import { Database, Cloud, Smartphone, Wifi, WifiOff } from 'lucide-react-native';
+import { Database, Cloud, Smartphone, Wifi, WifiOff, HardDrive, ExternalLink } from 'lucide-react-native';
 
 export default function DatabaseSettingsScreen() {
   const { mode, setMode, isOnline } = useDatabaseContext();
@@ -134,7 +134,24 @@ export default function DatabaseSettingsScreen() {
           {'\n'}• Update the configuration in the app
           {'\n'}• Create the required database tables/collections
         </Text>
+        
+        <TouchableOpacity
+          style={styles.setupGuideButton}
+          onPress={() => router.push('/firebase-setup')}
+        >
+          <ExternalLink size={16} color="#FF6B35" />
+          <Text style={styles.setupGuideText}>Firebase Setup Guide</Text>
+        </TouchableOpacity>
       </View>
+
+      {/* Backup Settings Link */}
+      <TouchableOpacity
+        style={styles.backupButton}
+        onPress={() => router.push('/backup-settings')}
+      >
+        <HardDrive size={20} color="#8B4513" />
+        <Text style={styles.backupButtonText}>Backup & Restore Settings</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -246,5 +263,41 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#856404',
     lineHeight: 20,
+  },
+  backupButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    marginHorizontal: 16,
+    marginBottom: 20,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#8B4513',
+    justifyContent: 'center',
+  },
+  backupButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#8B4513',
+    marginLeft: 8,
+  },
+  setupGuideButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#FF6B35',
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  setupGuideText: {
+    color: '#FF6B35',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 6,
   },
 });

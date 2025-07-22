@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Order, Product, User, AuthUser, Customer } from '@/types';
 import { PRODUCTS } from '@/constants/products';
 import { sendNewOrderNotification, sendOrderStatusNotification } from '@/utils/notifications';
+import { AutoBackupService } from '@/utils/auto-backup';
 
 export interface BackupData {
   version: string;
