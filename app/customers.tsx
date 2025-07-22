@@ -85,20 +85,20 @@ export default function CustomersScreen() {
       <View style={styles.container}>
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{customers.length}</Text>
-            <Text style={styles.statLabel}>Total Customers</Text>
+            <Text style={styles.statCardNumber}>{customers.length}</Text>
+            <Text style={styles.statCardLabel}>Total Customers</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statNumber}>
+            <Text style={styles.statCardNumber}>
               {formatCurrencyShort(customers.reduce((sum, c) => sum + c.totalSpent, 0))}
             </Text>
-            <Text style={styles.statLabel}>Total Revenue</Text>
+            <Text style={styles.statCardLabel}>Total Revenue</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statNumber}>
+            <Text style={styles.statCardNumber}>
               {customers.reduce((sum, c) => sum + c.totalOrders, 0)}
             </Text>
-            <Text style={styles.statLabel}>Total Orders</Text>
+            <Text style={styles.statCardLabel}>Total Orders</Text>
           </View>
         </View>
 
@@ -170,13 +170,13 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  statNumber: {
+  statCardNumber: {
     fontSize: 18,
     fontWeight: '700',
     color: '#D4A574',
     marginBottom: 4,
   },
-  statLabel: {
+  statCardLabel: {
     fontSize: 12,
     color: '#6B5B73',
     fontWeight: '500',
