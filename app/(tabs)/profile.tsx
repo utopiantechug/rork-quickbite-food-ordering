@@ -1,11 +1,11 @@
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { LogOut, Settings, User, Shield, Package, Plus, Users, RotateCcw, Download, Upload, Database } from 'lucide-react-native';
+import { LogOut, Settings, User, Shield, Package, Plus, Users, RotateCcw, Download, Upload, Database, UserCog } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useBakeryStore } from '@/store/bakery-store';
 import { createBackupFile, selectAndReadBackupFile, getBackupInfo } from '@/utils/backup-restore';
 
 export default function ProfileScreen() {
-  const { user, logout, resetData, createBackup, restoreFromBackup, validateBackup } = useBakeryStore();
+  const { currentUser, logout, resetData, createBackup, restoreFromBackup, validateBackup } = useBakeryStore();
 
   const handleLogout = () => {
     Alert.alert(
@@ -32,7 +32,10 @@ export default function ProfileScreen() {
       
       Alert.alert(
         'Backup Created',
-        `Backup file has been created successfully!\n\nFile: ${fileName.includes('/') ? fileName.split('/').pop() : fileName}\nData: ${backupData.data.products.length} products, ${backupData.data.orders.length} orders, ${backupData.data.customers.length} customers`
+        `Backup file has been created successfully!
+
+File: ${fileName.includes('/') ? fileName.split('/').pop() : fileName}
+Data: ${backupData.data.products.length} products, ${backupData.data.orders.length} orders, ${backupData.data.customers.length} customers, ${backupData.data.users.length} users`
       );
     } catch (error) {
       console.error('Backup error:', error);
@@ -65,7 +68,17 @@ export default function ProfileScreen() {
               
               Alert.alert(
                 'Confirm Restore',
-                `Restore data from backup?\n\nBackup Date: ${info.date}\nVersion: ${info.version}\n\nData to restore:\n• ${info.productsCount} products\n• ${info.ordersCount} orders\n• ${info.customersCount} customers${info.hasUser ? '\n• User settings' : ''}`,
+                `Restore data from backup?
+
+Backup Date: ${info.date}
+Version: ${info.version}
+
+Data to restore:
+• ${info.productsCount} products
+• ${info.ordersCount} orders
+• ${info.customersCount} customers
+• ${backupData.data.users.length} users${info.hasUser ? '
+• Current user session' : ''}`,
                 [
                   { text: 'Cancel', style: 'cancel' },
                   {
@@ -109,7 +122,7 @@ export default function ProfileScreen() {
   const handleResetData = () => {
     Alert.alert(
       'Reset All Data',
-      'This will permanently delete all orders, customers, and custom products. This action cannot be undone.',
+      'This will permanently delete all orders, customers, and custom products. User accounts will be preserved. This action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         { 
@@ -117,14 +130,14 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: () => {
             resetData();
-            Alert.alert('Success', 'All data has been reset to defaults');
+            Alert.alert('Success', 'All data has been reset to defaults (users preserved)');
           }
         }
       ]
     );
   };
 
-  if (!user) {
+  if (!currentUser) {
     return (
       <View style={styles.container}>
         <View style={styles.loginPrompt}>
@@ -143,10 +156,17 @@ export default function ProfileScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.avatar}>
-          <Shield size={32} color="#D4A574" />
+          {currentUser.role === 'admin' ? (
+            <Shield size={32} color="#D4A574" />
+          ) : (
+            <User size={32} color="#D4A574" />
+          )}
         </View>
-        <Text style={styles.name}>{user.name}</Text>
-        <Text style={styles.role}>Bakery Staff</Text>
+        <Text style={styles.name}>{currentUser.name}</Text>
+        <Text style={styles.role}>
+          {currentUser.role === 'admin' ? 'Administrator' : 'Staff Member'}
+        </Text>
+        <Text style={styles.username}>@{currentUser.username}</Text>
       </View>
 
       <View style={styles.menu}>
@@ -170,6 +190,22 @@ export default function ProfileScreen() {
           <Text style={styles.menuText}>Create New Order</Text>
         </Pressable>
 
+        {currentUser.role === 'admin' && (
+          <>
+            <View style={styles.divider} />
+            
+            <View style={styles.sectionHeader}>
+              <UserCog size={20} color="#D4A574" />
+              <Text style={styles.sectionTitle}>Administration</Text>
+            </View>
+
+            <Pressable style={styles.menuItem} onPress={() => router.push('/user-management')}>
+              <UserCog size={24} color="#3498DB" />
+              <Text style={[styles.menuText, { color: '#3498DB' }]}>User Management</Text>
+            </Pressable>
+          </>
+        )}
+
         <View style={styles.divider} />
 
         <View style={styles.sectionHeader}>
@@ -182,15 +218,19 @@ export default function ProfileScreen() {
           <Text style={[styles.menuText, { color: '#27AE60' }]}>Create Backup</Text>
         </Pressable>
 
-        <Pressable style={styles.menuItem} onPress={handleRestore}>
-          <Upload size={24} color="#3498DB" />
-          <Text style={[styles.menuText, { color: '#3498DB' }]}>Restore from Backup</Text>
-        </Pressable>
+        {currentUser.role === 'admin' && (
+          <>
+            <Pressable style={styles.menuItem} onPress={handleRestore}>
+              <Upload size={24} color="#3498DB" />
+              <Text style={[styles.menuText, { color: '#3498DB' }]}>Restore from Backup</Text>
+            </Pressable>
 
-        <Pressable style={styles.menuItem} onPress={handleResetData}>
-          <RotateCcw size={24} color="#F39C12" />
-          <Text style={[styles.menuText, { color: '#F39C12' }]}>Reset All Data</Text>
-        </Pressable>
+            <Pressable style={styles.menuItem} onPress={handleResetData}>
+              <RotateCcw size={24} color="#F39C12" />
+              <Text style={[styles.menuText, { color: '#F39C12' }]}>Reset All Data</Text>
+            </Pressable>
+          </>
+        )}
         
         <View style={styles.divider} />
         
@@ -244,6 +284,12 @@ const styles = StyleSheet.create({
   },
   role: {
     fontSize: 16,
+    color: '#D4A574',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  username: {
+    fontSize: 14,
     color: '#6B5B73',
   },
   menu: {

@@ -9,7 +9,7 @@ import { useBakeryStore } from '@/store/bakery-store';
 
 export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const { products, user } = useBakeryStore();
+  const { products, currentUser } = useBakeryStore();
   
   const filteredProducts = selectedCategory === 'all' 
     ? products 
@@ -24,7 +24,7 @@ export default function HomeScreen() {
           <Text style={styles.title}>OvenTreats UG</Text>
           <Text style={styles.subtitle}>Premium Bakery</Text>
         </View>
-        {user?.isAdmin && (
+        {currentUser && (
           <Pressable style={styles.adminButton} onPress={() => router.push('/admin')}>
             <Settings size={24} color="#D4A574" />
           </Pressable>

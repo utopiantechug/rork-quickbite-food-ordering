@@ -1,13 +1,14 @@
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { ArrowLeft, Shield } from 'lucide-react-native';
+import { ArrowLeft, Shield, UserPlus } from 'lucide-react-native';
 import { router, Stack } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useBakeryStore } from '@/store/bakery-store';
 
 export default function AdminLoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const login = useBakeryStore(state => state.login);
+  const [isLoading, setIsLoading] = useState(false);
+  const { login, isInitialized } = useBakeryStore();
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -17,20 +18,66 @@ export default function AdminLoginScreen() {
     }
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
       Alert.alert('Missing Information', 'Please enter both username and password');
       return;
     }
 
-    // Simple admin credentials for demo
-    if (username === 'admin' && password === 'bakery123') {
-      login(true, 'Admin User');
-      router.replace('/(tabs)');
-    } else {
-      Alert.alert('Invalid Credentials', 'Please check your username and password');
+    setIsLoading(true);
+    try {
+      const user = await login(username.trim(), password);
+      
+      if (user) {
+        router.replace('/(tabs)');
+      } else {
+        Alert.alert('Invalid Credentials', 'Please check your username and password');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      Alert.alert('Login Error', 'An error occurred during login. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  const handleSetupAdmin = () => {
+    router.push('/setup-admin');
+  };
+
+  // If no users exist, show setup option
+  if (!isInitialized()) {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            title: 'Setup Required',
+            headerLeft: () => (
+              <Pressable onPress={handleBack}>
+                <ArrowLeft size={24} color="#2D1810" />
+              </Pressable>
+            ),
+          }}
+        />
+        <View style={styles.container}>
+          <View style={styles.content}>
+            <View style={styles.iconContainer}>
+              <UserPlus size={64} color="#D4A574" />
+            </View>
+            
+            <Text style={styles.title}>Setup Administrator</Text>
+            <Text style={styles.subtitle}>
+              No administrator account exists. Please create the first admin account to get started.
+            </Text>
+
+            <Pressable style={styles.setupButton} onPress={handleSetupAdmin}>
+              <Text style={styles.setupButtonText}>Create Admin Account</Text>
+            </Pressable>
+          </View>
+        </View>
+      </>
+    );
+  }
 
   return (
     <>
@@ -62,6 +109,7 @@ export default function AdminLoginScreen() {
               placeholder="Enter username"
               placeholderTextColor="#6B5B73"
               autoCapitalize="none"
+              autoCorrect={false}
             />
           </View>
 
@@ -77,15 +125,15 @@ export default function AdminLoginScreen() {
             />
           </View>
 
-          <Pressable style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>Login</Text>
+          <Pressable 
+            style={[styles.loginButton, isLoading && styles.loginButtonDisabled]} 
+            onPress={handleLogin}
+            disabled={isLoading}
+          >
+            <Text style={styles.loginButtonText}>
+              {isLoading ? 'Logging in...' : 'Login'}
+            </Text>
           </Pressable>
-
-          <View style={styles.demoCredentials}>
-            <Text style={styles.demoTitle}>Demo Credentials:</Text>
-            <Text style={styles.demoText}>Username: admin</Text>
-            <Text style={styles.demoText}>Password: bakery123</Text>
-          </View>
         </View>
       </View>
     </>
@@ -146,28 +194,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
   },
+  loginButtonDisabled: {
+    opacity: 0.6,
+  },
   loginButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
   },
-  demoCredentials: {
-    marginTop: 40,
-    padding: 16,
-    backgroundColor: '#fff',
+  setupButton: {
+    backgroundColor: '#D4A574',
+    paddingVertical: 16,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
+    alignItems: 'center',
+    marginTop: 32,
   },
-  demoTitle: {
-    fontSize: 14,
+  setupButtonText: {
+    color: '#fff',
+    fontSize: 18,
     fontWeight: '600',
-    color: '#2D1810',
-    marginBottom: 8,
-  },
-  demoText: {
-    fontSize: 14,
-    color: '#6B5B73',
-    fontFamily: 'monospace',
   },
 });

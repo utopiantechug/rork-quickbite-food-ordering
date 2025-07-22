@@ -37,6 +37,22 @@ export interface Customer {
 }
 
 export interface User {
-  isAdmin: boolean;
+  id: string;
+  username: string;
+  password: string;
   name: string;
+  email: string;
+  role: 'admin' | 'staff';
+  isActive: boolean;
+  createdAt: Date;
+  createdBy?: string;
+}
+
+export interface AuthUser {
+  id: string;
+  username: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'staff';
+  isActive: boolean;
 }

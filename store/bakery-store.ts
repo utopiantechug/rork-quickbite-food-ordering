@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Order, Product, User, Customer } from '@/types';
+import { Order, Product, User, AuthUser, Customer } from '@/types';
 import { PRODUCTS } from '@/constants/products';
 
 export interface BackupData {
@@ -11,11 +11,23 @@ export interface BackupData {
     products: Product[];
     orders: Order[];
     customers: Customer[];
-    user: User | null;
+    users: User[];
+    currentUser: AuthUser | null;
   };
 }
 
 interface BakeryState {
+  // Authentication
+  currentUser: AuthUser | null;
+  users: User[];
+  login: (username: string, password: string) => Promise<AuthUser | null>;
+  logout: () => void;
+  registerUser: (userData: Omit<User, 'id' | 'createdAt' | 'createdBy'>) => void;
+  updateUser: (id: string, userData: Partial<User>) => void;
+  deleteUser: (id: string) => void;
+  initializeAdmin: (adminData: { username: string; password: string; name: string; email: string }) => void;
+  isInitialized: () => boolean;
+
   // Products
   products: Product[];
   addProduct: (product: Omit<Product, 'id'>) => void;
@@ -31,11 +43,6 @@ interface BakeryState {
   customers: Customer[];
   updateCustomers: () => void;
 
-  // User
-  user: User | null;
-  login: (isAdmin: boolean, name: string) => void;
-  logout: () => void;
-
   // Backup & Restore
   createBackup: () => BackupData;
   restoreFromBackup: (backupData: BackupData) => Promise<void>;
@@ -45,9 +52,110 @@ interface BakeryState {
   resetData: () => void;
 }
 
+// Simple password hashing (in production, use proper bcrypt)
+const hashPassword = (password: string): string => {
+  return btoa(password + 'oventreats_salt');
+};
+
+const verifyPassword = (password: string, hash: string): boolean => {
+  return hashPassword(password) === hash;
+};
+
 export const useBakeryStore = create<BakeryState>()(
   persist(
     (set, get) => ({
+      // Authentication
+      currentUser: null,
+      users: [],
+
+      isInitialized: () => {
+        return get().users.length > 0;
+      },
+
+      initializeAdmin: (adminData) => {
+        const adminUser: User = {
+          id: 'admin-' + Date.now(),
+          username: adminData.username,
+          password: hashPassword(adminData.password),
+          name: adminData.name,
+          email: adminData.email,
+          role: 'admin',
+          isActive: true,
+          createdAt: new Date(),
+        };
+        
+        set({ users: [adminUser] });
+      },
+
+      login: async (username, password) => {
+        const { users } = get();
+        const user = users.find(u => u.username === username && u.isActive);
+        
+        if (user && verifyPassword(password, user.password)) {
+          const authUser: AuthUser = {
+            id: user.id,
+            username: user.username,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            isActive: user.isActive,
+          };
+          set({ currentUser: authUser });
+          return authUser;
+        }
+        
+        return null;
+      },
+
+      logout: () => {
+        set({ currentUser: null });
+      },
+
+      registerUser: (userData) => {
+        const { users, currentUser } = get();
+        
+        // Check if username already exists
+        if (users.find(u => u.username === userData.username)) {
+          throw new Error('Username already exists');
+        }
+        
+        const newUser: User = {
+          ...userData,
+          id: 'user-' + Date.now(),
+          password: hashPassword(userData.password),
+          createdAt: new Date(),
+          createdBy: currentUser?.id,
+        };
+        
+        set({ users: [...users, newUser] });
+      },
+
+      updateUser: (id, userData) => {
+        set({
+          users: get().users.map(user => {
+            if (user.id === id) {
+              const updatedUser = { ...user, ...userData };
+              // If password is being updated, hash it
+              if (userData.password) {
+                updatedUser.password = hashPassword(userData.password);
+              }
+              return updatedUser;
+            }
+            return user;
+          })
+        });
+      },
+
+      deleteUser: (id) => {
+        const { currentUser } = get();
+        // Prevent deleting yourself
+        if (currentUser?.id === id) {
+          throw new Error('Cannot delete your own account');
+        }
+        
+        set({ users: get().users.filter(user => user.id !== id) });
+      },
+
       // Products
       products: PRODUCTS,
       addProduct: (productData) => {
@@ -125,16 +233,6 @@ export const useBakeryStore = create<BakeryState>()(
         set({ customers: Array.from(customerMap.values()) });
       },
 
-      // User
-      user: null,
-      login: (isAdmin, name) => {
-        set({ user: { isAdmin, name } });
-      },
-
-      logout: () => {
-        set({ user: null });
-      },
-
       // Backup & Restore
       createBackup: () => {
         const state = get();
@@ -152,7 +250,11 @@ export const useBakeryStore = create<BakeryState>()(
               ...customer,
               lastOrderDate: customer.lastOrderDate?.toISOString(),
             })) as any,
-            user: state.user,
+            users: state.users.map(user => ({
+              ...user,
+              createdAt: user.createdAt.toISOString(),
+            })) as any,
+            currentUser: state.currentUser,
           },
         };
       },
@@ -169,17 +271,7 @@ export const useBakeryStore = create<BakeryState>()(
           if (!Array.isArray(backupData.products)) return false;
           if (!Array.isArray(backupData.orders)) return false;
           if (!Array.isArray(backupData.customers)) return false;
-          
-          // Basic validation of data structure
-          if (backupData.products.length > 0) {
-            const product = backupData.products[0];
-            if (!product.id || !product.name || typeof product.price !== 'number') return false;
-          }
-          
-          if (backupData.orders.length > 0) {
-            const order = backupData.orders[0];
-            if (!order.id || !order.customerName || !Array.isArray(order.items)) return false;
-          }
+          if (!Array.isArray(backupData.users)) return false;
           
           return true;
         } catch (error) {
@@ -204,12 +296,18 @@ export const useBakeryStore = create<BakeryState>()(
             lastOrderDate: customer.lastOrderDate ? new Date(customer.lastOrderDate as any) : undefined,
           }));
           
+          const users = data.users.map(user => ({
+            ...user,
+            createdAt: new Date(user.createdAt as any),
+          }));
+          
           // Update the store with restored data
           set({
             products: data.products,
             orders,
             customers,
-            user: data.user,
+            users,
+            currentUser: data.currentUser,
           });
           
           // Update customers to ensure consistency
@@ -226,7 +324,7 @@ export const useBakeryStore = create<BakeryState>()(
           products: PRODUCTS,
           orders: [],
           customers: [],
-          user: null,
+          // Don't reset users and currentUser
         });
       },
     }),
@@ -244,7 +342,11 @@ export const useBakeryStore = create<BakeryState>()(
           ...customer,
           lastOrderDate: customer.lastOrderDate?.toISOString(),
         })),
-        user: state.user,
+        users: state.users.map(user => ({
+          ...user,
+          createdAt: user.createdAt.toISOString(),
+        })),
+        currentUser: state.currentUser,
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
@@ -258,6 +360,11 @@ export const useBakeryStore = create<BakeryState>()(
           state.customers = state.customers.map(customer => ({
             ...customer,
             lastOrderDate: customer.lastOrderDate ? new Date(customer.lastOrderDate) : undefined,
+          }));
+
+          state.users = state.users.map(user => ({
+            ...user,
+            createdAt: new Date(user.createdAt),
           }));
 
           // Update customers after rehydration to ensure consistency

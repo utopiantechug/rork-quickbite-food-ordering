@@ -3,16 +3,20 @@ import { OrderCard } from '@/components/OrderCard';
 import { useBakeryStore } from '@/store/bakery-store';
 
 export default function OrdersScreen() {
-  const { orders, user } = useBakeryStore();
+  const { orders, currentUser } = useBakeryStore();
   
-  const userOrders = user?.isAdmin ? orders : orders.filter(order => order.customerName === user?.name);
+  // Show all orders for staff/admin, or filter for customers (though customers don't have accounts in this system)
+  const userOrders = currentUser ? orders : [];
 
   if (userOrders.length === 0) {
     return (
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyTitle}>No Orders Yet</Text>
         <Text style={styles.emptyText}>
-          Your orders will appear here once you place them
+          {currentUser 
+            ? 'Orders will appear here once they are created'
+            : 'Please login to view orders'
+          }
         </Text>
       </View>
     );

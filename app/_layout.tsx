@@ -47,12 +47,15 @@ function RootLayoutNav() {
     <Stack screenOptions={{ headerBackTitle: "Back" }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="admin-login" options={{ headerShown: true }} />
+      <Stack.Screen name="setup-admin" options={{ headerShown: true }} />
       <Stack.Screen name="admin" options={{ headerShown: true }} />
       <Stack.Screen name="products" options={{ headerShown: true }} />
       <Stack.Screen name="product-form" options={{ headerShown: true }} />
       <Stack.Screen name="order-form" options={{ headerShown: true }} />
       <Stack.Screen name="customers" options={{ headerShown: true }} />
       <Stack.Screen name="customer-details" options={{ headerShown: true }} />
+      <Stack.Screen name="user-management" options={{ headerShown: true }} />
+      <Stack.Screen name="user-form" options={{ headerShown: true }} />
     </Stack>
   );
 }
