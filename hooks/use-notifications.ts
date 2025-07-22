@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { 
   requestNotificationPermissions, 
@@ -9,6 +10,9 @@ import {
   setBadgeCount
 } from '@/utils/notifications';
 import { useBakeryStore } from '@/store/bakery-store';
+
+// Check if we're running in Expo Go
+const isExpoGo = Constants.appOwnership === 'expo';
 
 export const useNotifications = () => {
   const { orders, currentUser } = useBakeryStore();
@@ -20,6 +24,12 @@ export const useNotifications = () => {
 
     const initializeNotifications = async () => {
       try {
+        // Skip notification setup in Expo Go for push notifications
+        if (isExpoGo) {
+          console.log('Running in Expo Go - limited notification support');
+          return;
+        }
+
         // Request permissions
         const permissions = await requestNotificationPermissions();
         
@@ -34,7 +44,7 @@ export const useNotifications = () => {
         }
 
         // Set up notification listeners (mobile only, not in Expo Go)
-        if (Platform.OS !== 'web' && !permissions.granted && permissions.canAskAgain) {
+        if (Platform.OS !== 'web' && permissions.granted) {
           // Only set up listeners if we have proper notification support
           try {
             // Listen for notifications received while app is foregrounded

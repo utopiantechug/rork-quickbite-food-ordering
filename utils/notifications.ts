@@ -8,8 +8,15 @@ import { formatCurrency } from '@/utils/currency';
 // Check if we're running in Expo Go
 const isExpoGo = Constants.appOwnership === 'expo';
 
+// Log notification support status
+if (isExpoGo) {
+  console.log('📱 Running in Expo Go - Notifications will be logged to console');
+} else {
+  console.log('📱 Running in development build - Full notification support available');
+}
+
 // Configure notification behavior only if not in Expo Go
-if (!isExpoGo) {
+if (!isExpoGo && Platform.OS !== 'web') {
   try {
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
