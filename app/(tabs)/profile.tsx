@@ -3,6 +3,7 @@ import { LogOut, Settings, User, Shield, Package, Plus, Users, RotateCcw, Downlo
 import { router } from 'expo-router';
 import { useBakeryStore } from '@/store/bakery-store';
 import { createBackupFile, selectAndReadBackupFile, getBackupInfo } from '@/utils/backup-restore';
+import { NotificationSettings } from '@/components/NotificationSettings';
 
 export default function ProfileScreen() {
   const { currentUser, logout, resetData, createBackup, restoreFromBackup, validateBackup } = useBakeryStore();
@@ -77,7 +78,8 @@ Data to restore:
 • ${info.productsCount} products
 • ${info.ordersCount} orders
 • ${info.customersCount} customers
-• ${backupData.data.users.length} users${info.hasUser ? '\n• Current user session' : ''}`,
+• ${backupData.data.users.length} users${info.hasUser ? '
+• Current user session' : ''}`,
                 [
                   { text: 'Cancel', style: 'cancel' },
                   {
@@ -168,6 +170,11 @@ Data to restore:
         <Text style={styles.username}>@{currentUser.username}</Text>
       </View>
 
+      {/* Notification Settings */}
+      <View style={styles.section}>
+        <NotificationSettings />
+      </View>
+
       <View style={styles.menu}>
         <Pressable style={styles.menuItem} onPress={() => router.push('/admin')}>
           <Settings size={24} color="#6B5B73" />
@@ -241,10 +248,10 @@ Data to restore:
 
       <View style={styles.footer}>
         <Text style={styles.footerText}>
-          💾 Use backup to save your data before major changes
+          🔔 Enable notifications to get instant updates on new orders
         </Text>
         <Text style={styles.footerText}>
-          Data is automatically saved and will persist between app updates
+          💾 Use backup to save your data before major changes
         </Text>
       </View>
     </View>
@@ -290,6 +297,10 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 14,
     color: '#6B5B73',
+  },
+  section: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
   menu: {
     paddingHorizontal: 20,

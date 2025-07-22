@@ -5,6 +5,7 @@ import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { trpc, trpcClient } from "@/lib/trpc";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { useNotifications } from "@/hooks/use-notifications";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -42,7 +43,10 @@ const queryClient = new QueryClient({
   },
 });
 
-function RootLayoutNav() {
+function AppContent() {
+  // Initialize notifications
+  useNotifications();
+
   return (
     <Stack screenOptions={{ headerBackTitle: "Back" }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -58,6 +62,10 @@ function RootLayoutNav() {
       <Stack.Screen name="user-form" options={{ headerShown: true }} />
     </Stack>
   );
+}
+
+function RootLayoutNav() {
+  return <AppContent />;
 }
 
 export default function RootLayout() {

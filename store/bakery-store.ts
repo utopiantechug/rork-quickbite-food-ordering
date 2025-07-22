@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Order, Product, User, AuthUser, Customer } from '@/types';
 import { PRODUCTS } from '@/constants/products';
+import { sendNewOrderNotification, sendOrderStatusNotification } from '@/utils/notifications';
 
 export interface BackupData {
   version: string;
@@ -180,24 +181,44 @@ export const useBakeryStore = create<BakeryState>()(
 
       // Orders
       orders: [],
-      addOrder: (orderData) => {
+      addOrder: async (orderData) => {
         const newOrder: Order = {
           ...orderData,
           id: Date.now().toString(),
           orderDate: new Date(),
         };
+        
         set({ orders: [...get().orders, newOrder] });
+        
+        // Send notification for new order
+        try {
+          await sendNewOrderNotification(newOrder);
+        } catch (error) {
+          console.error('Failed to send new order notification:', error);
+        }
         
         // Update customers after adding order
         setTimeout(() => get().updateCustomers(), 0);
       },
 
-      updateOrderStatus: (orderId, status) => {
+      updateOrderStatus: async (orderId, status) => {
+        const { orders } = get();
+        const order = orders.find(o => o.id === orderId);
+        
         set({
-          orders: get().orders.map(order =>
+          orders: orders.map(order =>
             order.id === orderId ? { ...order, status } : order
           )
         });
+
+        // Send notification for status update
+        if (order) {
+          try {
+            await sendOrderStatusNotification(order, status);
+          } catch (error) {
+            console.error('Failed to send order status notification:', error);
+          }
+        }
       },
 
       // Customers
