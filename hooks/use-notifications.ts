@@ -12,8 +12,8 @@ import { useBakeryStore } from '@/store/bakery-store';
 
 export const useNotifications = () => {
   const { orders, currentUser } = useBakeryStore();
-  const notificationListener = useRef<Notifications.Subscription>();
-  const responseListener = useRef<Notifications.Subscription>();
+  const notificationListener = useRef<Notifications.Subscription | null>(null);
+  const responseListener = useRef<Notifications.Subscription | null>(null);
 
   useEffect(() => {
     let isMounted = true;
