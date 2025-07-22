@@ -1,10 +1,10 @@
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { LogOut, Settings, User, Shield, Package, Plus, Users } from 'lucide-react-native';
+import { LogOut, Settings, User, Shield, Package, Plus, Users, RotateCcw } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useBakeryStore } from '@/store/bakery-store';
 
 export default function ProfileScreen() {
-  const { user, logout } = useBakeryStore();
+  const { user, logout, resetData } = useBakeryStore();
 
   const handleLogout = () => {
     Alert.alert(
@@ -18,6 +18,24 @@ export default function ProfileScreen() {
           onPress: () => {
             logout();
             router.replace('/admin-login');
+          }
+        }
+      ]
+    );
+  };
+
+  const handleResetData = () => {
+    Alert.alert(
+      'Reset All Data',
+      'This will permanently delete all orders, customers, and custom products. This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Reset', 
+          style: 'destructive',
+          onPress: () => {
+            resetData();
+            Alert.alert('Success', 'All data has been reset to defaults');
           }
         }
       ]
@@ -69,11 +87,24 @@ export default function ProfileScreen() {
           <Plus size={24} color="#6B5B73" />
           <Text style={styles.menuText}>Create New Order</Text>
         </Pressable>
+
+        <View style={styles.divider} />
+
+        <Pressable style={styles.menuItem} onPress={handleResetData}>
+          <RotateCcw size={24} color="#F39C12" />
+          <Text style={[styles.menuText, { color: '#F39C12' }]}>Reset All Data</Text>
+        </Pressable>
         
         <Pressable style={styles.menuItem} onPress={handleLogout}>
           <LogOut size={24} color="#E74C3C" />
           <Text style={[styles.menuText, { color: '#E74C3C' }]}>Logout</Text>
         </Pressable>
+      </View>
+
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>
+          Data is automatically saved and will persist between app updates
+        </Text>
       </View>
     </View>
   );
@@ -115,6 +146,7 @@ const styles = StyleSheet.create({
   },
   menu: {
     paddingHorizontal: 20,
+    flex: 1,
   },
   menuItem: {
     flexDirection: 'row',
@@ -135,6 +167,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#2D1810',
     marginLeft: 16,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E8E8E8',
+    marginVertical: 8,
   },
   loginPrompt: {
     flex: 1,
@@ -166,5 +203,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  footer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 12,
+    color: '#6B5B73',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });
