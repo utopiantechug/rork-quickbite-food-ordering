@@ -28,8 +28,8 @@ export function Invoice({ order }: InvoiceProps) {
     <View style={styles.invoice}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.bakeryName}>Golden Crust Bakery</Text>
-        <Text style={styles.bakerySubtitle}>Artisan Bakery - Kampala, Uganda</Text>
+        <Text style={styles.bakeryName}>OvenTreats UG</Text>
+        <Text style={styles.bakerySubtitle}>Bakery - Kampala, Uganda</Text>
         <Text style={styles.invoiceTitle}>INVOICE</Text>
       </View>
 
