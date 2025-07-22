@@ -21,8 +21,8 @@ export default function HomeScreen() {
       
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Golden Crust</Text>
-          <Text style={styles.subtitle}>Artisan Bakery</Text>
+          <Text style={styles.title}>OvenTreats UG</Text>
+          <Text style={styles.subtitle}>Premium Bakery</Text>
         </View>
         {user?.isAdmin && (
           <Pressable style={styles.adminButton} onPress={() => router.push('/admin')}>

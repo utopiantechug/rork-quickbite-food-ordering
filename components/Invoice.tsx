@@ -29,7 +29,7 @@ export function Invoice({ order }: InvoiceProps) {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.bakeryName}>OvenTreats UG</Text>
-        <Text style={styles.bakerySubtitle}>Bakery - Kampala, Uganda</Text>
+        <Text style={styles.bakerySubtitle}>Premium Bakery - Kampala, Uganda</Text>
         <Text style={styles.invoiceTitle}>INVOICE</Text>
       </View>
 
@@ -90,7 +90,7 @@ export function Invoice({ order }: InvoiceProps) {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <Text style={styles.footerText}>Thank you for choosing Golden Crust Bakery!</Text>
+        <Text style={styles.footerText}>Thank you for choosing OvenTreats UG!</Text>
         <Text style={styles.footerText}>Your order is ready for pickup.</Text>
         {order.estimatedTime && (
           <Text style={styles.footerText}>Estimated preparation time was: {order.estimatedTime}</Text>

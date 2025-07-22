@@ -155,8 +155,8 @@ const generateInvoiceHTML = (order: Order): string => {
     <body>
       <div class="invoice">
         <div class="header">
-          <div class="bakery-name">Golden Crust Bakery</div>
-          <div class="bakery-subtitle">Artisan Bakery - Kampala, Uganda</div>
+          <div class="bakery-name">OvenTreats UG</div>
+          <div class="bakery-subtitle">Premium Bakery - Kampala, Uganda</div>
           <div class="invoice-title">INVOICE</div>
         </div>
 
@@ -218,7 +218,7 @@ const generateInvoiceHTML = (order: Order): string => {
         </div>
 
         <div class="footer">
-          <p><strong>Thank you for choosing Golden Crust Bakery!</strong></p>
+          <p><strong>Thank you for choosing OvenTreats UG!</strong></p>
           <p>Your order is ready for pickup.</p>
           ${order.estimatedTime ? `<p>Estimated preparation time was: ${order.estimatedTime}</p>` : ''}
           <p style="margin-top: 20px; font-style: italic;">We appreciate your business!</p>
@@ -318,10 +318,10 @@ export const shareViaWhatsApp = async (order: Order) => {
 export const shareViaEmail = async (order: Order) => {
   try {
     const pdfUri = await generatePDF(order);
-    const subject = `Invoice #INV-${order.id} - Golden Crust Bakery`;
+    const subject = `Invoice #INV-${order.id} - OvenTreats UG`;
     const body = `Dear ${order.customerName},
 
-Thank you for your order at Golden Crust Bakery!
+Thank you for your order at OvenTreats UG!
 
 Your order is ready for pickup. Please find the invoice attached.
 
@@ -333,7 +333,7 @@ Order Details:
 We appreciate your business!
 
 Best regards,
-Golden Crust Bakery Team
+OvenTreats UG Team
 Kampala, Uganda`;
     
     if (Platform.OS === 'web') {
@@ -430,7 +430,7 @@ export const generateInvoiceText = (order: Order): string => {
     });
   };
 
-  let invoiceText = `🥖 GOLDEN CRUST BAKERY - INVOICE 🥖
+  let invoiceText = `🥖 OVENTREATS UG - INVOICE 🥖
 Kampala, Uganda
 
 `;
@@ -476,7 +476,7 @@ Kampala, Uganda
 
 `;
   
-  invoiceText += `🎉 Thank you for choosing Golden Crust Bakery!
+  invoiceText += `🎉 Thank you for choosing OvenTreats UG!
 `;
   invoiceText += `Your order is ready for pickup.
 `;
