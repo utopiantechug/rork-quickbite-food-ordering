@@ -1,5 +1,4 @@
-import { Platform, Alert } from 'react-native';
-import * as Sharing from 'expo-sharing';
+import { Platform, Alert, Share } from 'react-native';
 import * as Linking from 'expo-linking';
 import { Order } from '@/types';
 
@@ -20,38 +19,63 @@ export const generateInvoiceText = (order: Order): string => {
     });
   };
 
-  let invoiceText = `🥖 GOLDEN CRUST BAKERY - INVOICE 🥖\n\n`;
-  invoiceText += `Invoice #: INV-${order.id}\n`;
-  invoiceText += `Order Date: ${formatDate(order.orderDate)} at ${formatTime(order.orderDate)}\n`;
-  invoiceText += `Delivery Date: ${formatDate(order.deliveryDate)}\n`;
-  invoiceText += `Status: ✅ Ready for Pickup\n\n`;
+  let invoiceText = `🥖 GOLDEN CRUST BAKERY - INVOICE 🥖
+
+`;
+  invoiceText += `Invoice #: INV-${order.id}
+`;
+  invoiceText += `Order Date: ${formatDate(order.orderDate)} at ${formatTime(order.orderDate)}
+`;
+  invoiceText += `Delivery Date: ${formatDate(order.deliveryDate)}
+`;
+  invoiceText += `Status: ✅ Ready for Pickup
+
+`;
   
-  invoiceText += `📋 CUSTOMER DETAILS:\n`;
-  invoiceText += `Name: ${order.customerName}\n`;
-  invoiceText += `Phone: ${order.customerPhone}\n`;
-  invoiceText += `Email: ${order.customerEmail}\n\n`;
+  invoiceText += `📋 CUSTOMER DETAILS:
+`;
+  invoiceText += `Name: ${order.customerName}
+`;
+  invoiceText += `Phone: ${order.customerPhone}
+`;
+  invoiceText += `Email: ${order.customerEmail}
+
+`;
   
-  invoiceText += `🛒 ORDER ITEMS:\n`;
-  invoiceText += `${'─'.repeat(40)}\n`;
+  invoiceText += `🛒 ORDER ITEMS:
+`;
+  invoiceText += `${'─'.repeat(40)}
+`;
   
   order.items.forEach((item, index) => {
     const itemTotal = item.product.price * item.quantity;
-    invoiceText += `${index + 1}. ${item.product.name}\n`;
-    invoiceText += `   Qty: ${item.quantity} × $${item.product.price.toFixed(2)} = $${itemTotal.toFixed(2)}\n\n`;
+    invoiceText += `${index + 1}. ${item.product.name}
+`;
+    invoiceText += `   Qty: ${item.quantity} × $${item.product.price.toFixed(2)} = $${itemTotal.toFixed(2)}
+
+`;
   });
   
-  invoiceText += `${'─'.repeat(40)}\n`;
-  invoiceText += `💰 TOTAL AMOUNT: $${order.total.toFixed(2)}\n`;
-  invoiceText += `${'─'.repeat(40)}\n\n`;
+  invoiceText += `${'─'.repeat(40)}
+`;
+  invoiceText += `💰 TOTAL AMOUNT: $${order.total.toFixed(2)}
+`;
+  invoiceText += `${'─'.repeat(40)}
+
+`;
   
-  invoiceText += `🎉 Thank you for choosing Golden Crust Bakery!\n`;
-  invoiceText += `Your order is ready for pickup.\n`;
+  invoiceText += `🎉 Thank you for choosing Golden Crust Bakery!
+`;
+  invoiceText += `Your order is ready for pickup.
+`;
   
   if (order.estimatedTime) {
-    invoiceText += `Preparation time: ${order.estimatedTime}\n`;
+    invoiceText += `Preparation time: ${order.estimatedTime}
+`;
   }
   
-  invoiceText += `\nWe appreciate your business! 🙏`;
+  invoiceText += `
+We appreciate your business! 🙏`;
   
   return invoiceText;
 };
@@ -74,18 +98,12 @@ export const shareViaWhatsApp = async (order: Order) => {
       await Linking.openURL(whatsappUrl);
     } else {
       // Fallback to general sharing
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(invoiceText, {
-          mimeType: 'text/plain',
-          dialogTitle: 'Share Invoice',
-        });
-      } else {
-        Alert.alert('Sharing not available', 'Unable to share invoice on this device');
-      }
+      await shareInvoice(order);
     }
   } catch (error) {
     console.error('WhatsApp sharing error:', error);
-    Alert.alert('Error', 'Failed to share via WhatsApp');
+    Alert.alert('Error', 'Failed to share via WhatsApp. Trying general share...');
+    await shareInvoice(order);
   }
 };
 
@@ -115,36 +133,57 @@ export const shareViaEmail = async (order: Order) => {
         }
       } catch (mailError) {
         // Fallback to general sharing
-        if (await Sharing.isAvailableAsync()) {
-          await Sharing.shareAsync(invoiceText, {
-            mimeType: 'text/plain',
-            dialogTitle: 'Share Invoice via Email',
-          });
-        } else {
-          Alert.alert('Email not available', 'Unable to send email on this device');
-        }
+        await shareInvoice(order);
       }
     }
   } catch (error) {
     console.error('Email sharing error:', error);
-    Alert.alert('Error', 'Failed to share via email');
+    Alert.alert('Error', 'Failed to share via email. Trying general share...');
+    await shareInvoice(order);
   }
 };
 
 export const shareInvoice = async (order: Order) => {
   try {
     const invoiceText = generateInvoiceText(order);
+    const title = `Invoice #INV-${order.id} - Golden Crust Bakery`;
     
-    if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(invoiceText, {
-        mimeType: 'text/plain',
-        dialogTitle: 'Share Invoice',
-      });
+    if (Platform.OS === 'web') {
+      // For web, use the Web Share API if available, otherwise copy to clipboard
+      if (navigator.share) {
+        await navigator.share({
+          title: title,
+          text: invoiceText,
+        });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(invoiceText);
+        Alert.alert('Copied!', 'Invoice copied to clipboard');
+      } else {
+        // Fallback: create a downloadable text file
+        const blob = new Blob([invoiceText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `invoice-${order.id}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
     } else {
-      Alert.alert('Sharing not available', 'Unable to share invoice on this device');
+      // For mobile, use React Native's Share API
+      const result = await Share.share({
+        message: invoiceText,
+        title: title,
+      });
+      
+      if (result.action === Share.dismissedAction) {
+        // User dismissed the share dialog
+        console.log('Share dismissed');
+      }
     }
   } catch (error) {
     console.error('General sharing error:', error);
-    Alert.alert('Error', 'Failed to share invoice');
+    Alert.alert('Error', 'Failed to share invoice. Please try again.');
   }
 };
