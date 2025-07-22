@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
-import { WifiOff, Wifi } from 'lucide-react-native';
+import { WifiOff, Wifi, AlertTriangle } from 'lucide-react-native';
 
 export function NetworkStatus() {
   const [isOnline, setIsOnline] = useState(true);
@@ -12,24 +12,47 @@ export function NetworkStatus() {
       try {
         // Use a more reliable endpoint for network checking
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
         
-        const response = await fetch('https://httpbin.org/status/200', {
-          method: 'HEAD',
-          mode: 'no-cors',
-          signal: controller.signal,
-        });
+        // Try multiple endpoints for better reliability
+        const endpoints = [
+          'https://httpbin.org/status/200',
+          'https://www.google.com/favicon.ico',
+          'https://api.github.com'
+        ];
+        
+        let success = false;
+        for (const endpoint of endpoints) {
+          try {
+            await fetch(endpoint, {
+              method: 'HEAD',
+              mode: 'no-cors',
+              signal: controller.signal,
+            });
+            success = true;
+            break;
+          } catch (e) {
+            // Try next endpoint
+            continue;
+          }
+        }
         
         clearTimeout(timeoutId);
-        setIsOnline(true);
-        setLastError(null);
+        
+        if (success) {
+          setIsOnline(true);
+          setLastError(null);
+        } else {
+          throw new Error('All endpoints failed');
+        }
       } catch (error) {
         console.warn('Network check failed:', error);
         setIsOnline(false);
         
         if (error instanceof Error) {
-          if (error.message.includes('Remote update request not successful')) {
-            setLastError('Remote update failed');
+          if (error.message.includes('Remote update request not successful') ||
+              error.message.includes('Failed to download remote update')) {
+            setLastError('Update check failed');
           } else if (error.name === 'AbortError') {
             setLastError('Connection timeout');
           } else {
@@ -42,8 +65,8 @@ export function NetworkStatus() {
     // Initial check
     checkNetwork();
     
-    // Check every 15 seconds
-    const interval = setInterval(checkNetwork, 15000);
+    // Check every 30 seconds (less frequent to avoid spam)
+    const interval = setInterval(checkNetwork, 30000);
 
     // Listen for network state changes on web
     if (Platform.OS === 'web') {
@@ -73,8 +96,13 @@ export function NetworkStatus() {
   useEffect(() => {
     if (!isOnline || lastError) {
       setShowStatus(true);
+      // For update errors, hide after 10 seconds
+      if (lastError?.includes('Update check failed')) {
+        const timer = setTimeout(() => setShowStatus(false), 10000);
+        return () => clearTimeout(timer);
+      }
     } else {
-      const timer = setTimeout(() => setShowStatus(false), 3000);
+      const timer = setTimeout(() => setShowStatus(false), 5000);
       return () => clearTimeout(timer);
     }
   }, [isOnline, lastError]);
@@ -83,13 +111,26 @@ export function NetworkStatus() {
 
   const getStatusMessage = () => {
     if (isOnline && !lastError) return 'Back online';
+    if (lastError?.includes('Update check failed')) return 'App working normally (update check failed)';
     if (lastError) return lastError;
     return 'No internet connection';
   };
 
+  const getStatusColor = () => {
+    if (isOnline && !lastError) return '#27AE60';
+    if (lastError?.includes('Update check failed')) return '#F39C12';
+    return '#E74C3C';
+  };
+
+  const getStatusIcon = () => {
+    if (isOnline && !lastError) return <Wifi size={16} color="#fff" />;
+    if (lastError?.includes('Update check failed')) return <AlertTriangle size={16} color="#fff" />;
+    return <WifiOff size={16} color="#fff" />;
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: isOnline && !lastError ? '#27AE60' : '#E74C3C' }]}>
-      {isOnline && !lastError ? <Wifi size={16} color="#fff" /> : <WifiOff size={16} color="#fff" />}
+    <View style={[styles.container, { backgroundColor: getStatusColor() }]}>
+      {getStatusIcon()}
       <Text style={styles.text}>
         {getStatusMessage()}
       </Text>

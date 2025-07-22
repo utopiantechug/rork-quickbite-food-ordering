@@ -28,7 +28,7 @@ export const trpcClient = trpc.createClient({
       fetch: async (url, options) => {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+          const timeoutId = setTimeout(() => controller.abort(), 15000); // Increased to 15 seconds
           
           const response = await fetch(url, {
             ...options,
@@ -51,8 +51,12 @@ export const trpcClient = trpc.createClient({
               throw new Error('Request timeout - please check your connection');
             }
             if (error.message.includes('Network request failed') || 
-                error.message.includes('Remote update request not successful')) {
-              throw new Error('Network connection failed - please check your internet connection');
+                error.message.includes('Remote update request not successful') ||
+                error.message.includes('Failed to download remote update')) {
+              throw new Error('Network connection failed - the app is working offline');
+            }
+            if (error.message.includes('fetch')) {
+              throw new Error('Connection error - please check your internet connection');
             }
           }
           

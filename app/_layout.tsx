@@ -16,7 +16,8 @@ const queryClient = new QueryClient({
         // Don't retry on network errors or timeout errors
         if (error?.message?.includes('Network') || 
             error?.message?.includes('timeout') ||
-            error?.message?.includes('Remote update request not successful')) {
+            error?.message?.includes('Remote update request not successful') ||
+            error?.message?.includes('Failed to download remote update')) {
           return false;
         }
         return failureCount < 2;
@@ -30,7 +31,8 @@ const queryClient = new QueryClient({
         // Don't retry mutations on network errors
         if (error?.message?.includes('Network') || 
             error?.message?.includes('timeout') ||
-            error?.message?.includes('Remote update request not successful')) {
+            error?.message?.includes('Remote update request not successful') ||
+            error?.message?.includes('Failed to download remote update')) {
           return false;
         }
         return failureCount < 1;
@@ -57,7 +59,23 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   useEffect(() => {
-    SplashScreen.hideAsync();
+    const initializeApp = async () => {
+      try {
+        // Add a small delay to let any network issues settle
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await SplashScreen.hideAsync();
+      } catch (error) {
+        console.warn('App initialization warning:', error);
+        // Hide splash screen anyway to prevent app from being stuck
+        try {
+          await SplashScreen.hideAsync();
+        } catch (splashError) {
+          console.warn('Failed to hide splash screen:', splashError);
+        }
+      }
+    };
+
+    initializeApp();
   }, []);
 
   return (
