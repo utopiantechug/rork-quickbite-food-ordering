@@ -1,5 +1,6 @@
 import { Platform, Alert, Share } from 'react-native';
 import * as Linking from 'expo-linking';
+import * as MailComposer from 'expo-mail-composer';
 import { Order } from '@/types';
 
 export const generateInvoiceText = (order: Order): string => {
@@ -119,7 +120,6 @@ export const shareViaEmail = async (order: Order) => {
     } else {
       // Try to use mail composer for mobile
       try {
-        const { MailComposer } = await import('expo-mail-composer');
         const isAvailable = await MailComposer.isAvailableAsync();
         
         if (isAvailable) {
