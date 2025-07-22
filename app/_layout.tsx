@@ -13,17 +13,29 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: (failureCount, error) => {
-        // Don't retry on network errors
-        if (error?.message?.includes('Network request failed')) {
+        // Don't retry on network errors or timeout errors
+        if (error?.message?.includes('Network') || 
+            error?.message?.includes('timeout') ||
+            error?.message?.includes('Remote update request not successful')) {
           return false;
         }
         return failureCount < 2;
       },
       staleTime: 5 * 60 * 1000, // 5 minutes
       gcTime: 10 * 60 * 1000, // 10 minutes (renamed from cacheTime)
+      networkMode: 'offlineFirst', // Allow queries to run even when offline
     },
     mutations: {
-      retry: false,
+      retry: (failureCount, error) => {
+        // Don't retry mutations on network errors
+        if (error?.message?.includes('Network') || 
+            error?.message?.includes('timeout') ||
+            error?.message?.includes('Remote update request not successful')) {
+          return false;
+        }
+        return failureCount < 1;
+      },
+      networkMode: 'offlineFirst',
     },
   },
 });

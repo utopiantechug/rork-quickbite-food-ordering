@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { AlertTriangle, RefreshCw } from 'lucide-react-native';
+import { AlertTriangle, RefreshCw, Wifi } from 'lucide-react-native';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -29,19 +29,51 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     this.setState({ hasError: false, error: undefined });
   };
 
+  getErrorMessage = () => {
+    const errorMessage = this.state.error?.message || '';
+    
+    if (errorMessage.includes('Network') || 
+        errorMessage.includes('Remote update request not successful') ||
+        errorMessage.includes('timeout') ||
+        errorMessage.includes('fetch')) {
+      return 'Network connection issue. Please check your internet connection and try again.';
+    }
+    
+    if (errorMessage.includes('JSON') || errorMessage.includes('parse')) {
+      return 'Data format error. Please try again or contact support.';
+    }
+    
+    return 'An unexpected error occurred. Please try again.';
+  };
+
+  getErrorIcon = () => {
+    const errorMessage = this.state.error?.message || '';
+    
+    if (errorMessage.includes('Network') || 
+        errorMessage.includes('Remote update request not successful') ||
+        errorMessage.includes('timeout') ||
+        errorMessage.includes('fetch')) {
+      return <Wifi size={64} color="#E74C3C" />;
+    }
+    
+    return <AlertTriangle size={64} color="#E74C3C" />;
+  };
+
   render() {
     if (this.state.hasError) {
       return (
         <View style={styles.container}>
           <View style={styles.content}>
-            <AlertTriangle size={64} color="#E74C3C" />
+            {this.getErrorIcon()}
             <Text style={styles.title}>Something went wrong</Text>
             <Text style={styles.message}>
-              {this.state.error?.message?.includes('Network') || 
-               this.state.error?.message?.includes('Remote update') 
-                ? 'Network connection issue. Please check your internet connection and try again.'
-                : 'An unexpected error occurred. Please try again.'}
+              {this.getErrorMessage()}
             </Text>
+            {this.state.error?.message && (
+              <Text style={styles.errorDetails}>
+                Error: {this.state.error.message}
+              </Text>
+            )}
             <Pressable style={styles.retryButton} onPress={this.handleRetry}>
               <RefreshCw size={20} color="#fff" />
               <Text style={styles.retryButtonText}>Try Again</Text>
@@ -80,7 +112,14 @@ const styles = StyleSheet.create({
     color: '#6B5B73',
     textAlign: 'center',
     lineHeight: 24,
+    marginBottom: 16,
+  },
+  errorDetails: {
+    fontSize: 12,
+    color: '#E74C3C',
+    textAlign: 'center',
     marginBottom: 32,
+    fontFamily: 'monospace',
   },
   retryButton: {
     flexDirection: 'row',

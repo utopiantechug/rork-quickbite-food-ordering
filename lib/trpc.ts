@@ -27,19 +27,37 @@ export const trpcClient = trpc.createClient({
       transformer: superjson,
       fetch: async (url, options) => {
         try {
-          const response = await fetch(url, options);
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+          
+          const response = await fetch(url, {
+            ...options,
+            signal: controller.signal,
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          
           return response;
         } catch (error) {
           console.warn('tRPC request failed:', error);
-          // Return a mock response to prevent crashes
-          return new Response(
-            JSON.stringify({ error: 'Network request failed' }),
-            { 
-              status: 500, 
-              statusText: 'Network Error',
-              headers: { 'Content-Type': 'application/json' }
+          
+          // Handle specific network errors
+          if (error instanceof Error) {
+            if (error.name === 'AbortError') {
+              throw new Error('Request timeout - please check your connection');
             }
-          );
+            if (error.message.includes('Network request failed') || 
+                error.message.includes('Remote update request not successful')) {
+              throw new Error('Network connection failed - please check your internet connection');
+            }
+          }
+          
+          // Re-throw the original error
+          throw error;
         }
       },
     }),
