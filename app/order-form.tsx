@@ -17,6 +17,8 @@ export default function OrderFormScreen() {
   const [deliveryDate, setDeliveryDate] = useState('');
   const [showCustomerSuggestions, setShowCustomerSuggestions] = useState(false);
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
+  const [productSearchQuery, setProductSearchQuery] = useState('');
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
 
   // Filter customers based on input
   useEffect(() => {
@@ -34,6 +36,21 @@ export default function OrderFormScreen() {
       setFilteredCustomers([]);
     }
   }, [customerEmail, customerPhone, customerName, customers]);
+
+  // Filter products based on search query
+  useEffect(() => {
+    const availableProducts = products.filter(p => p.available);
+    if (productSearchQuery.trim().length > 0) {
+      const query = productSearchQuery.toLowerCase().trim();
+      const filtered = availableProducts.filter(product =>
+        product.name.toLowerCase().includes(query) ||
+        product.category.toLowerCase().includes(query)
+      );
+      setFilteredProducts(filtered);
+    } else {
+      setFilteredProducts(availableProducts);
+    }
+  }, [productSearchQuery, products]);
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -298,12 +315,48 @@ export default function OrderFormScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Add Products</Text>
-          <FlatList
-            data={products.filter(p => p.available)}
-            renderItem={renderProductItem}
-            keyExtractor={(item) => item.id}
-            scrollEnabled={false}
-          />
+          
+          <View style={styles.productSearchContainer}>
+            <View style={styles.searchInputContainer}>
+              <Search size={20} color="#6B5B73" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                value={productSearchQuery}
+                onChangeText={setProductSearchQuery}
+                placeholder="Search products..."
+                placeholderTextColor="#6B5B73"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              {productSearchQuery.length > 0 && (
+                <Pressable
+                  style={styles.clearSearchButton}
+                  onPress={() => setProductSearchQuery('')}
+                >
+                  <Text style={styles.clearSearchText}>×</Text>
+                </Pressable>
+              )}
+            </View>
+            {productSearchQuery.length > 0 && (
+              <Text style={styles.searchResultsText}>
+                {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} found
+              </Text>
+            )}
+          </View>
+
+          {filteredProducts.length > 0 ? (
+            <FlatList
+              data={filteredProducts}
+              renderItem={renderProductItem}
+              keyExtractor={(item) => item.id}
+              scrollEnabled={false}
+            />
+          ) : productSearchQuery.length > 0 ? (
+            <View style={styles.noResultsContainer}>
+              <Text style={styles.noResultsText}>No products found matching "{productSearchQuery}"</Text>
+              <Text style={styles.noResultsSubtext}>Try searching with different keywords</Text>
+            </View>
+          ) : null}
         </View>
 
         {orderItems.length > 0 && (
@@ -435,6 +488,66 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#D4A574',
     fontWeight: '500',
+  },
+  productSearchContainer: {
+    marginBottom: 16,
+  },
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 8,
+  },
+  searchIcon: {
+    marginRight: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#2D1810',
+  },
+  clearSearchButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#E8E8E8',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  clearSearchText: {
+    fontSize: 18,
+    color: '#6B5B73',
+    fontWeight: '600',
+  },
+  searchResultsText: {
+    fontSize: 14,
+    color: '#6B5B73',
+    fontStyle: 'italic',
+    marginLeft: 4,
+  },
+  noResultsContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 24,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  noResultsText: {
+    fontSize: 16,
+    color: '#6B5B73',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  noResultsSubtext: {
+    fontSize: 14,
+    color: '#9B9B9B',
+    textAlign: 'center',
   },
   productItem: {
     flexDirection: 'row',
