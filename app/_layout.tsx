@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { trpc, trpcClient } from "@/lib/trpc";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useNotifications } from "@/hooks/use-notifications";
+import { DatabaseProvider } from "@/store/database-provider";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -60,6 +61,7 @@ function AppContent() {
       <Stack.Screen name="customer-details" options={{ headerShown: true }} />
       <Stack.Screen name="user-management" options={{ headerShown: true }} />
       <Stack.Screen name="user-form" options={{ headerShown: true }} />
+      <Stack.Screen name="database-settings" options={{ headerShown: true }} />
     </Stack>
   );
 }
