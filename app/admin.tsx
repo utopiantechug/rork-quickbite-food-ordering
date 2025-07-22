@@ -1,9 +1,10 @@
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { ArrowLeft, Clock, CheckCircle, XCircle, Plus } from 'lucide-react-native';
+import { ArrowLeft, Clock, CheckCircle, XCircle, Plus, MessageCircle, Mail, Share } from 'lucide-react-native';
 import { router, Stack } from 'expo-router';
 import { useState } from 'react';
 import { useBakeryStore } from '@/store/bakery-store';
 import { Order } from '@/types';
+import { shareViaWhatsApp, shareViaEmail, shareInvoice } from '@/utils/invoice-sharing';
 
 const ORDER_TABS = [
   { id: 'all', label: 'All Orders' },
@@ -20,6 +21,20 @@ export default function AdminScreen() {
 
   const handleStatusUpdate = (orderId: string, status: Order['status']) => {
     updateOrderStatus(orderId, status);
+  };
+
+  const handleShareInvoice = (order: Order, method: 'whatsapp' | 'email' | 'general') => {
+    switch (method) {
+      case 'whatsapp':
+        shareViaWhatsApp(order);
+        break;
+      case 'email':
+        shareViaEmail(order);
+        break;
+      case 'general':
+        shareInvoice(order);
+        break;
+    }
   };
 
   const getFilteredOrders = () => {
@@ -84,6 +99,36 @@ export default function AdminScreen() {
           {order.orderDate.toLocaleDateString()} {order.orderDate.toLocaleTimeString()}
         </Text>
       </View>
+
+      {/* Share Invoice Section - Only show for ready orders */}
+      {order.status === 'ready' && (
+        <View style={styles.shareSection}>
+          <Text style={styles.shareTitle}>Share Invoice:</Text>
+          <View style={styles.shareButtons}>
+            <Pressable
+              style={[styles.shareButton, styles.whatsappButton]}
+              onPress={() => handleShareInvoice(order, 'whatsapp')}
+            >
+              <MessageCircle size={16} color="#fff" />
+              <Text style={styles.shareButtonText}>WhatsApp</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.shareButton, styles.emailButton]}
+              onPress={() => handleShareInvoice(order, 'email')}
+            >
+              <Mail size={16} color="#fff" />
+              <Text style={styles.shareButtonText}>Email</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.shareButton, styles.generalButton]}
+              onPress={() => handleShareInvoice(order, 'general')}
+            >
+              <Share size={16} color="#fff" />
+              <Text style={styles.shareButtonText}>Share</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
 
       <View style={styles.actionButtons}>
         {order.status === 'pending' && (
@@ -405,6 +450,46 @@ const styles = StyleSheet.create({
   orderDate: {
     fontSize: 12,
     color: '#6B5B73',
+  },
+  shareSection: {
+    marginBottom: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E8E8E8',
+  },
+  shareTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2D1810',
+    marginBottom: 8,
+  },
+  shareButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  shareButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    gap: 4,
+  },
+  whatsappButton: {
+    backgroundColor: '#25D366',
+  },
+  emailButton: {
+    backgroundColor: '#4285F4',
+  },
+  generalButton: {
+    backgroundColor: '#6B5B73',
+  },
+  shareButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   actionButtons: {
     flexDirection: 'row',
