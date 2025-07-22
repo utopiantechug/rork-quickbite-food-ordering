@@ -1,10 +1,11 @@
-import { Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View, Platform } from 'react-native';
-import { ArrowLeft, Plus, Minus, Trash2, Calendar } from 'lucide-react-native';
+import { Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ArrowLeft, Plus, Minus, Trash2 } from 'lucide-react-native';
 import { router, Stack } from 'expo-router';
 import { useState } from 'react';
 import { Image } from 'expo-image';
 import { useBakeryStore } from '@/store/bakery-store';
 import { Product, CartItem } from '@/types';
+import { DatePicker } from '@/components/DatePicker';
 
 export default function OrderFormScreen() {
   const { products, addOrder } = useBakeryStore();
@@ -49,17 +50,10 @@ export default function OrderFormScreen() {
     return orderItems.reduce((total, item) => total + (item.product.price * item.quantity), 0);
   };
 
-  const formatDateForInput = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
   const getTomorrowDate = () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    return formatDateForInput(tomorrow);
+    return tomorrow;
   };
 
   const validateEmail = (email: string) => {
@@ -218,18 +212,12 @@ export default function OrderFormScreen() {
           </View>
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Delivery Date</Text>
-            <View style={styles.dateInputContainer}>
-              <Calendar size={20} color="#D4A574" style={styles.calendarIcon} />
-              <TextInput
-                style={[styles.input, styles.dateInput]}
-                value={deliveryDate}
-                onChangeText={setDeliveryDate}
-                placeholder={getTomorrowDate()}
-                placeholderTextColor="#6B5B73"
-                {...(Platform.OS === 'web' ? { type: 'date' } : {})}
-              />
-            </View>
-            <Text style={styles.dateHint}>Format: YYYY-MM-DD (e.g., {getTomorrowDate()})</Text>
+            <DatePicker
+              value={deliveryDate}
+              onDateChange={setDeliveryDate}
+              placeholder="Select delivery date"
+              minDate={getTomorrowDate()}
+            />
           </View>
         </View>
 
@@ -301,26 +289,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#2D1810',
     backgroundColor: '#fff',
-  },
-  dateInputContainer: {
-    position: 'relative',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  calendarIcon: {
-    position: 'absolute',
-    right: 16,
-    zIndex: 1,
-  },
-  dateInput: {
-    flex: 1,
-    paddingRight: 48,
-  },
-  dateHint: {
-    fontSize: 12,
-    color: '#6B5B73',
-    marginTop: 4,
-    fontStyle: 'italic',
   },
   productItem: {
     flexDirection: 'row',
