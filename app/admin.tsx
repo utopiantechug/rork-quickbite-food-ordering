@@ -19,6 +19,14 @@ export default function AdminScreen() {
   const { orders, updateOrderStatus } = useBakeryStore();
   const [selectedTab, setSelectedTab] = useState<TabId>('all');
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
+
   const handleStatusUpdate = (orderId: string, status: Order['status']) => {
     updateOrderStatus(orderId, status);
   };
@@ -175,7 +183,7 @@ export default function AdminScreen() {
         options={{
           title: 'Order Management',
           headerLeft: () => (
-            <Pressable onPress={() => router.back()}>
+            <Pressable onPress={handleBack}>
               <ArrowLeft size={24} color="#2D1810" />
             </Pressable>
           ),

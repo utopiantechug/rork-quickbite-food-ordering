@@ -8,6 +8,14 @@ import { Product } from '@/types';
 export default function ProductsScreen() {
   const { products, deleteProduct } = useBakeryStore();
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
+
   const handleDeleteProduct = (product: Product) => {
     Alert.alert(
       'Delete Product',
@@ -69,7 +77,7 @@ export default function ProductsScreen() {
         options={{
           title: 'Product Management',
           headerLeft: () => (
-            <Pressable onPress={() => router.back()}>
+            <Pressable onPress={handleBack}>
               <ArrowLeft size={24} color="#2D1810" />
             </Pressable>
           ),

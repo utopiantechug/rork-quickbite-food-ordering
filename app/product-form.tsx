@@ -26,6 +26,14 @@ export default function ProductFormScreen() {
   const [image, setImage] = useState(existingProduct?.image || '');
   const [available, setAvailable] = useState(existingProduct?.available ?? true);
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/products');
+    }
+  };
+
   const handleSave = () => {
     if (!name.trim() || !description.trim() || !price.trim() || !image.trim()) {
       Alert.alert('Missing Information', 'Please fill in all fields');
@@ -50,12 +58,12 @@ export default function ProductFormScreen() {
     if (isEditing && id) {
       updateProduct(id, productData);
       Alert.alert('Success', 'Product updated successfully', [
-        { text: 'OK', onPress: () => router.back() }
+        { text: 'OK', onPress: handleBack }
       ]);
     } else {
       addProduct(productData);
       Alert.alert('Success', 'Product added successfully', [
-        { text: 'OK', onPress: () => router.back() }
+        { text: 'OK', onPress: handleBack }
       ]);
     }
   };
@@ -66,7 +74,7 @@ export default function ProductFormScreen() {
         options={{
           title: isEditing ? 'Edit Product' : 'Add Product',
           headerLeft: () => (
-            <Pressable onPress={() => router.back()}>
+            <Pressable onPress={handleBack}>
               <ArrowLeft size={24} color="#2D1810" />
             </Pressable>
           ),

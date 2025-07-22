@@ -15,6 +15,14 @@ export default function OrderFormScreen() {
   const [orderItems, setOrderItems] = useState<CartItem[]>([]);
   const [deliveryDate, setDeliveryDate] = useState('');
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/admin');
+    }
+  };
+
   const addToOrder = (product: Product) => {
     const existingItem = orderItems.find(item => item.product.id === product.id);
     
@@ -105,7 +113,7 @@ export default function OrderFormScreen() {
     Alert.alert(
       'Order Created!',
       'The order has been created successfully.',
-      [{ text: 'OK', onPress: () => router.back() }]
+      [{ text: 'OK', onPress: handleBack }]
     );
   };
 
@@ -167,7 +175,7 @@ export default function OrderFormScreen() {
         options={{
           title: 'Create Order',
           headerLeft: () => (
-            <Pressable onPress={() => router.back()}>
+            <Pressable onPress={handleBack}>
               <ArrowLeft size={24} color="#2D1810" />
             </Pressable>
           ),

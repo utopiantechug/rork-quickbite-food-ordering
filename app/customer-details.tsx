@@ -13,6 +13,14 @@ export default function CustomerDetailsScreen() {
     order.customerEmail === customer?.email
   ).sort((a, b) => b.orderDate.getTime() - a.orderDate.getTime());
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/customers');
+    }
+  };
+
   if (!customer) {
     return (
       <View style={styles.container}>
@@ -32,7 +40,7 @@ export default function CustomerDetailsScreen() {
         options={{
           title: customer.name,
           headerLeft: () => (
-            <Pressable onPress={() => router.back()}>
+            <Pressable onPress={handleBack}>
               <ArrowLeft size={24} color="#2D1810" />
             </Pressable>
           ),

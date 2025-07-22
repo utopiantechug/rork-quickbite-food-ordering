@@ -9,6 +9,14 @@ export default function AdminLoginScreen() {
   const [password, setPassword] = useState('');
   const login = useBakeryStore(state => state.login);
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
+
   const handleLogin = () => {
     if (!username.trim() || !password.trim()) {
       Alert.alert('Missing Information', 'Please enter both username and password');
@@ -30,7 +38,7 @@ export default function AdminLoginScreen() {
         options={{
           title: 'Staff Login',
           headerLeft: () => (
-            <Pressable onPress={() => router.back()}>
+            <Pressable onPress={handleBack}>
               <ArrowLeft size={24} color="#2D1810" />
             </Pressable>
           ),

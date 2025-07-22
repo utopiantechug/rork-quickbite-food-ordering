@@ -9,6 +9,14 @@ export default function CustomersScreen() {
   const { customers } = useBakeryStore();
   const [searchQuery, setSearchQuery] = useState('');
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
+
   const filteredCustomers = useMemo(() => {
     if (!searchQuery.trim()) return customers;
     
@@ -67,7 +75,7 @@ export default function CustomersScreen() {
         options={{
           title: 'Customer Management',
           headerLeft: () => (
-            <Pressable onPress={() => router.back()}>
+            <Pressable onPress={handleBack}>
               <ArrowLeft size={24} color="#2D1810" />
             </Pressable>
           ),
