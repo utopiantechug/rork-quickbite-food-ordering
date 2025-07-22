@@ -23,6 +23,26 @@ export interface FirebaseBackupMetadata {
 export class FirebaseBackupService {
   private static COLLECTION_NAME = 'app_backups';
 
+  static isConfigured(): boolean {
+    try {
+      // Check if Firebase app is initialized with real config
+      const app = db.app;
+      const config = app.options;
+      
+      // Check if config contains placeholder values
+      const hasPlaceholders = 
+        config.apiKey?.includes('YOUR_') ||
+        config.projectId?.includes('YOUR_') ||
+        config.authDomain?.includes('YOUR_') ||
+        config.apiKey === 'YOUR_API_KEY' ||
+        config.projectId === 'YOUR_PROJECT_ID';
+        
+      return !hasPlaceholders && !!config.apiKey && !!config.projectId;
+    } catch (error) {
+      return false;
+    }
+  }
+
   static async createBackup(backupData: BackupData): Promise<string> {
     try {
       const backupDoc = {
@@ -62,6 +82,11 @@ export class FirebaseBackupService {
 
   static async listBackups(): Promise<FirebaseBackupMetadata[]> {
     try {
+      // Check if Firebase is properly configured
+      if (!db) {
+        throw new Error('Firebase not initialized');
+      }
+
       const q = query(
         collection(db, this.COLLECTION_NAME), 
         orderBy('createdAt', 'desc')
@@ -78,9 +103,19 @@ export class FirebaseBackupService {
           size: data.size,
         };
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error listing Firebase backups:', error);
-      throw new Error('Failed to list backups from Firebase');
+      
+      // Check for common configuration errors
+      if (error?.code === 'permission-denied') {
+        throw new Error('Firebase access denied. Please check your Firestore security rules.');
+      } else if (error?.code === 'unavailable') {
+        throw new Error('Firebase service unavailable. Please check your internet connection.');
+      } else if (error?.message?.includes('YOUR_API_KEY') || error?.message?.includes('YOUR_PROJECT_ID')) {
+        throw new Error('Firebase not configured. Please set up your Firebase credentials.');
+      } else {
+        throw new Error('Failed to list backups from Firebase');
+      }
     }
   }
 

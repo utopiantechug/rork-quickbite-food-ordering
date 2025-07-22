@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { Stack, router } from 'expo-router';
+import { Linking } from 'react-native';
 import { useBakeryStore } from '@/store/bakery-store';
 import {
   createBackupFile,
@@ -21,7 +22,7 @@ import {
   deleteFirebaseBackup,
 } from '@/utils/backup-restore';
 import { FirebaseBackupMetadata } from '@/utils/firebase-backup';
-import { Download, Upload, Cloud, CloudOff, Trash2, RefreshCw, HardDrive } from 'lucide-react-native';
+import { Download, Upload, Cloud, CloudOff, Trash2, RefreshCw, HardDrive, Settings, AlertTriangle, ExternalLink, Info } from 'lucide-react-native';
 import AutoBackupSettingsComponent from '@/components/AutoBackupSettings';
 
 export default function BackupSettings() {
@@ -29,18 +30,50 @@ export default function BackupSettings() {
   const [isLoading, setIsLoading] = useState(false);
   const [firebaseBackups, setFirebaseBackups] = useState<FirebaseBackupMetadata[]>([]);
   const [loadingFirebaseBackups, setLoadingFirebaseBackups] = useState(false);
+  const [firebaseConfigured, setFirebaseConfigured] = useState(false);
+  const [firebaseError, setFirebaseError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadFirebaseBackups();
+    checkFirebaseConfiguration();
   }, []);
 
+  const checkFirebaseConfiguration = async () => {
+    try {
+      // First check if Firebase is configured with real credentials
+      const { FirebaseBackupService } = await import('@/utils/firebase-backup');
+      
+      if (!FirebaseBackupService.isConfigured()) {
+        setFirebaseConfigured(false);
+        setFirebaseError('Firebase not configured. Please set up your Firebase credentials.');
+        return;
+      }
+
+      // Try to list backups to check if Firebase connection works
+      await listFirebaseBackups();
+      setFirebaseConfigured(true);
+      setFirebaseError(null);
+      loadFirebaseBackups();
+    } catch (error) {
+      setFirebaseConfigured(false);
+      if (error instanceof Error) {
+        setFirebaseError(error.message);
+      } else {
+        setFirebaseError('Firebase connection failed. Please check your configuration.');
+      }
+    }
+  };
+
   const loadFirebaseBackups = async () => {
+    if (!firebaseConfigured) return;
+    
     setLoadingFirebaseBackups(true);
     try {
       const backups = await listFirebaseBackups();
       setFirebaseBackups(backups);
+      setFirebaseError(null);
     } catch (error) {
       console.error('Failed to load Firebase backups:', error);
+      setFirebaseError('Failed to load cloud backups. Please check your connection.');
     } finally {
       setLoadingFirebaseBackups(false);
     }
@@ -114,6 +147,18 @@ export default function BackupSettings() {
   };
 
   const handleFirebaseBackup = async () => {
+    if (!firebaseConfigured) {
+      Alert.alert(
+        'Firebase Not Configured',
+        'Please set up Firebase first to use cloud backup features.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Setup Guide', onPress: () => router.push('/firebase-setup') }
+        ]
+      );
+      return;
+    }
+
     setIsLoading(true);
     try {
       const backupData = createBackup();
@@ -243,89 +288,140 @@ export default function BackupSettings() {
         <View style={styles.sectionHeader}>
           <Cloud size={24} color="#8B4513" />
           <Text style={styles.sectionTitle}>Firebase Cloud Backup</Text>
-          <TouchableOpacity
-            onPress={loadFirebaseBackups}
-            disabled={loadingFirebaseBackups}
-            style={styles.refreshButton}
-          >
-            <RefreshCw 
-              size={20} 
-              color="#8B4513" 
-              style={loadingFirebaseBackups ? { opacity: 0.5 } : {}}
-            />
-          </TouchableOpacity>
+          {firebaseConfigured && (
+            <TouchableOpacity
+              onPress={loadFirebaseBackups}
+              disabled={loadingFirebaseBackups}
+              style={styles.refreshButton}
+            >
+              <RefreshCw 
+                size={20} 
+                color="#8B4513" 
+                style={loadingFirebaseBackups ? { opacity: 0.5 } : {}}
+              />
+            </TouchableOpacity>
+          )}
         </View>
         <Text style={styles.sectionDescription}>
           Backup your data to Firebase cloud storage for safe keeping
         </Text>
 
-        <TouchableOpacity
-          style={[styles.button, styles.primaryButton]}
-          onPress={handleFirebaseBackup}
-          disabled={isLoading}
-        >
-          <Cloud size={20} color="#fff" />
-          <Text style={styles.buttonText}>Backup to Firebase</Text>
-        </TouchableOpacity>
+        {!firebaseConfigured && (
+          <View style={styles.configurationWarning}>
+            <AlertTriangle size={20} color="#f39c12" />
+            <View style={styles.warningContent}>
+              <Text style={styles.warningTitle}>Firebase Setup Required</Text>
+              <Text style={styles.warningText}>
+                {firebaseError || 'Firebase is not configured. Set up Firebase to enable cloud backup features.'}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        <View style={styles.buttonRow}>
+          <TouchableOpacity
+            style={[
+              styles.button, 
+              firebaseConfigured ? styles.primaryButton : styles.disabledButton
+            ]}
+            onPress={handleFirebaseBackup}
+            disabled={isLoading || !firebaseConfigured}
+          >
+            <Cloud size={20} color={firebaseConfigured ? "#fff" : "#999"} />
+            <Text style={[
+              styles.buttonText, 
+              { color: firebaseConfigured ? "#fff" : "#999" }
+            ]}>
+              Backup to Firebase
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, styles.secondaryButton]}
+            onPress={() => router.push('/firebase-setup')}
+          >
+            <Settings size={20} color="#8B4513" />
+            <Text style={[styles.buttonText, { color: '#8B4513' }]}>
+              Setup Guide
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Firebase Backups List */}
-        <View style={styles.backupsList}>
-          <Text style={styles.backupsTitle}>Cloud Backups</Text>
-          
-          {loadingFirebaseBackups ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="#8B4513" />
-              <Text style={styles.loadingText}>Loading backups...</Text>
-            </View>
-          ) : firebaseBackups.length === 0 ? (
-            <View style={styles.emptyState}>
-              <CloudOff size={48} color="#ccc" />
-              <Text style={styles.emptyText}>No cloud backups found</Text>
-              <Text style={styles.emptySubtext}>Create your first backup above</Text>
-            </View>
-          ) : (
-            firebaseBackups.map((backup) => (
-              <View key={backup.id} style={styles.backupItem}>
-                <View style={styles.backupInfo}>
-                  <Text style={styles.backupDate}>
-                    {new Date(backup.timestamp).toLocaleDateString('en-US', {
-                      weekday: 'short',
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </Text>
-                  <Text style={styles.backupDetails}>
-                    Version {backup.version} • {formatFileSize(backup.size)}
-                  </Text>
-                  {backup.deviceId && (
-                    <Text style={styles.deviceId}>
-                      Device: {backup.deviceId.slice(0, 8)}...
-                    </Text>
-                  )}
-                </View>
-                <View style={styles.backupActions}>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => handleFirebaseRestore(backup.id, backup.timestamp)}
-                    disabled={isLoading}
-                  >
-                    <Download size={16} color="#8B4513" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.actionButton, styles.deleteButton]}
-                    onPress={() => handleDeleteFirebaseBackup(backup.id, backup.timestamp)}
-                    disabled={isLoading}
-                  >
-                    <Trash2 size={16} color="#dc3545" />
-                  </TouchableOpacity>
-                </View>
+        {firebaseConfigured && (
+          <View style={styles.backupsList}>
+            <Text style={styles.backupsTitle}>Cloud Backups</Text>
+            
+            {loadingFirebaseBackups ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="#8B4513" />
+                <Text style={styles.loadingText}>Loading backups...</Text>
               </View>
-            ))
-          )}
-        </View>
+            ) : firebaseError ? (
+              <View style={styles.errorState}>
+                <AlertTriangle size={48} color="#dc3545" />
+                <Text style={styles.errorText}>Failed to load backups</Text>
+                <Text style={styles.errorSubtext}>{firebaseError}</Text>
+                <TouchableOpacity
+                  style={[styles.button, styles.secondaryButton, { marginTop: 12 }]}
+                  onPress={checkFirebaseConfiguration}
+                >
+                  <RefreshCw size={16} color="#8B4513" />
+                  <Text style={[styles.buttonText, { color: '#8B4513', fontSize: 14 }]}>
+                    Retry
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : firebaseBackups.length === 0 ? (
+              <View style={styles.emptyState}>
+                <CloudOff size={48} color="#ccc" />
+                <Text style={styles.emptyText}>No cloud backups found</Text>
+                <Text style={styles.emptySubtext}>Create your first backup above</Text>
+              </View>
+            ) : (
+              firebaseBackups.map((backup) => (
+                <View key={backup.id} style={styles.backupItem}>
+                  <View style={styles.backupInfo}>
+                    <Text style={styles.backupDate}>
+                      {new Date(backup.timestamp).toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </Text>
+                    <Text style={styles.backupDetails}>
+                      Version {backup.version} • {formatFileSize(backup.size)}
+                    </Text>
+                    {backup.deviceId && (
+                      <Text style={styles.deviceId}>
+                        Device: {backup.deviceId.slice(0, 8)}...
+                      </Text>
+                    )}
+                  </View>
+                  <View style={styles.backupActions}>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => handleFirebaseRestore(backup.id, backup.timestamp)}
+                      disabled={isLoading}
+                    >
+                      <Download size={16} color="#8B4513" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.deleteButton]}
+                      onPress={() => handleDeleteFirebaseBackup(backup.id, backup.timestamp)}
+                      disabled={isLoading}
+                    >
+                      <Trash2 size={16} color="#dc3545" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))
+            )}
+          </View>
+        )}
       </View>
 
       {/* Loading Overlay */}
@@ -497,5 +593,56 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 16,
     color: '#333',
+  },
+  configurationWarning: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#fff3cd',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#ffeaa7',
+  },
+  warningContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  warningTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#856404',
+    marginBottom: 4,
+  },
+  warningText: {
+    fontSize: 13,
+    color: '#856404',
+    lineHeight: 18,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  disabledButton: {
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+  },
+  errorState: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  errorText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#dc3545',
+    marginTop: 12,
+  },
+  errorSubtext: {
+    fontSize: 14,
+    color: '#6c757d',
+    marginTop: 4,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
 });
