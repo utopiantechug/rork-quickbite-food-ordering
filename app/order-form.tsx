@@ -1,20 +1,39 @@
 import { Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { ArrowLeft, Plus, Minus, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, Plus, Minus, Trash2, User, Search } from 'lucide-react-native';
 import { router, Stack } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Image } from 'expo-image';
 import { useBakeryStore } from '@/store/bakery-store';
-import { Product, CartItem } from '@/types';
+import { Product, CartItem, Customer } from '@/types';
 import { DatePicker } from '@/components/DatePicker';
 import { formatCurrency } from '@/utils/currency';
 
 export default function OrderFormScreen() {
-  const { products, addOrder } = useBakeryStore();
+  const { products, addOrder, customers } = useBakeryStore();
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [orderItems, setOrderItems] = useState<CartItem[]>([]);
   const [deliveryDate, setDeliveryDate] = useState('');
+  const [showCustomerSuggestions, setShowCustomerSuggestions] = useState(false);
+  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
+
+  // Filter customers based on input
+  useEffect(() => {
+    if (customerEmail.length > 0 || customerPhone.length > 0 || customerName.length > 0) {
+      const query = customerEmail.toLowerCase() || customerPhone || customerName.toLowerCase();
+      const filtered = customers.filter(customer =>
+        customer.email.toLowerCase().includes(query) ||
+        customer.phone.includes(query) ||
+        customer.name.toLowerCase().includes(query)
+      );
+      setFilteredCustomers(filtered);
+      setShowCustomerSuggestions(filtered.length > 0 && query.length > 2);
+    } else {
+      setShowCustomerSuggestions(false);
+      setFilteredCustomers([]);
+    }
+  }, [customerEmail, customerPhone, customerName, customers]);
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -22,6 +41,13 @@ export default function OrderFormScreen() {
     } else {
       router.replace('/admin');
     }
+  };
+
+  const selectCustomer = (customer: Customer) => {
+    setCustomerName(customer.name);
+    setCustomerPhone(customer.phone);
+    setCustomerEmail(customer.email);
+    setShowCustomerSuggestions(false);
   };
 
   const addToOrder = (product: Product) => {
@@ -118,6 +144,21 @@ export default function OrderFormScreen() {
     );
   };
 
+  const renderCustomerSuggestion = ({ item: customer }: { item: Customer }) => (
+    <Pressable style={styles.suggestionItem} onPress={() => selectCustomer(customer)}>
+      <View style={styles.suggestionIcon}>
+        <User size={16} color="#D4A574" />
+      </View>
+      <View style={styles.suggestionInfo}>
+        <Text style={styles.suggestionName}>{customer.name}</Text>
+        <Text style={styles.suggestionDetails}>{customer.email} • {customer.phone}</Text>
+        <Text style={styles.suggestionStats}>
+          {customer.totalOrders} orders • {formatCurrency(customer.totalSpent)} spent
+        </Text>
+      </View>
+    </Pressable>
+  );
+
   const renderProductItem = ({ item: product }: { item: Product }) => {
     const orderItem = orderItems.find(item => item.product.id === product.id);
     
@@ -185,6 +226,16 @@ export default function OrderFormScreen() {
       <ScrollView style={styles.container}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Customer Information</Text>
+          
+          {customers.length > 0 && (
+            <View style={styles.customerSearchHint}>
+              <Search size={16} color="#6B5B73" />
+              <Text style={styles.hintText}>
+                Start typing to search existing customers
+              </Text>
+            </View>
+          )}
+
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Customer Name</Text>
             <TextInput
@@ -195,6 +246,7 @@ export default function OrderFormScreen() {
               placeholderTextColor="#6B5B73"
             />
           </View>
+
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Phone Number</Text>
             <TextInput
@@ -206,6 +258,7 @@ export default function OrderFormScreen() {
               keyboardType="phone-pad"
             />
           </View>
+
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Email Address</Text>
             <TextInput
@@ -219,6 +272,19 @@ export default function OrderFormScreen() {
               autoCorrect={false}
             />
           </View>
+
+          {showCustomerSuggestions && (
+            <View style={styles.suggestionsContainer}>
+              <Text style={styles.suggestionsTitle}>Existing Customers:</Text>
+              <FlatList
+                data={filteredCustomers.slice(0, 3)} // Show max 3 suggestions
+                renderItem={renderCustomerSuggestion}
+                keyExtractor={(item) => item.id}
+                scrollEnabled={false}
+              />
+            </View>
+          )}
+
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Delivery Date</Text>
             <DatePicker
@@ -280,6 +346,21 @@ const styles = StyleSheet.create({
     color: '#2D1810',
     marginBottom: 16,
   },
+  customerSearchHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F4FD',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 16,
+    gap: 8,
+  },
+  hintText: {
+    fontSize: 14,
+    color: '#3498DB',
+    fontStyle: 'italic',
+  },
   inputContainer: {
     marginBottom: 16,
   },
@@ -298,6 +379,62 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#2D1810',
     backgroundColor: '#fff',
+  },
+  suggestionsContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  suggestionsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2D1810',
+    marginBottom: 12,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    marginBottom: 8,
+    backgroundColor: '#F5F1EB',
+  },
+  suggestionIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  suggestionInfo: {
+    flex: 1,
+  },
+  suggestionName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2D1810',
+    marginBottom: 2,
+  },
+  suggestionDetails: {
+    fontSize: 14,
+    color: '#6B5B73',
+    marginBottom: 2,
+  },
+  suggestionStats: {
+    fontSize: 12,
+    color: '#D4A574',
+    fontWeight: '500',
   },
   productItem: {
     flexDirection: 'row',
