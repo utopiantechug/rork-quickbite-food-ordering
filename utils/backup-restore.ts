@@ -3,7 +3,7 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import { BackupData } from '@/store/bakery-store';
-import { FirebaseBackupService } from './firebase-backup';
+import { FirebaseBackupService, FirebaseBackupMetadata } from './firebase-backup';
 
 export const createBackupFile = async (backupData: BackupData): Promise<string> => {
   try {
@@ -138,7 +138,7 @@ export const restoreFromFirebase = async (backupId: string): Promise<BackupData>
   }
 };
 
-export const listFirebaseBackups = async (): Promise<Array<{id: string, timestamp: string, version: string}>> => {
+export const listFirebaseBackups = async (): Promise<FirebaseBackupMetadata[]> => {
   try {
     return await FirebaseBackupService.listBackups();
   } catch (error) {
