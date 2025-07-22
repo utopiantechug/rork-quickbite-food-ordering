@@ -1,4 +1,4 @@
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LogOut, Settings, User, Shield, Package, Plus, Users, RotateCcw, Download, Upload, Database, UserCog } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useBakeryStore } from '@/store/bakery-store';
@@ -153,7 +153,7 @@ Data to restore:
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <View style={styles.avatar}>
           {currentUser.role === 'admin' ? (
@@ -253,7 +253,7 @@ Data to restore:
           💾 Use backup to save your data before major changes
         </Text>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -303,7 +303,6 @@ const styles = StyleSheet.create({
   },
   menu: {
     paddingHorizontal: 20,
-    flex: 1,
   },
   sectionHeader: {
     flexDirection: 'row',
