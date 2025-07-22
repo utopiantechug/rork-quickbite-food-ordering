@@ -77,8 +77,7 @@ Data to restore:
 • ${info.productsCount} products
 • ${info.ordersCount} orders
 • ${info.customersCount} customers
-• ${backupData.data.users.length} users${info.hasUser ? '
-• Current user session' : ''}`,
+• ${backupData.data.users.length} users${info.hasUser ? '\n• Current user session' : ''}`,
                 [
                   { text: 'Cancel', style: 'cancel' },
                   {
