@@ -1,10 +1,11 @@
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { LogOut, Settings, User, Shield, Package, Plus, Users, RotateCcw } from 'lucide-react-native';
+import { LogOut, Settings, User, Shield, Package, Plus, Users, RotateCcw, Download, Upload, Database } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useBakeryStore } from '@/store/bakery-store';
+import { createBackupFile, selectAndReadBackupFile, getBackupInfo } from '@/utils/backup-restore';
 
 export default function ProfileScreen() {
-  const { user, logout, resetData } = useBakeryStore();
+  const { user, logout, resetData, createBackup, restoreFromBackup, validateBackup } = useBakeryStore();
 
   const handleLogout = () => {
     Alert.alert(
@@ -18,6 +19,87 @@ export default function ProfileScreen() {
           onPress: () => {
             logout();
             router.replace('/admin-login');
+          }
+        }
+      ]
+    );
+  };
+
+  const handleBackup = async () => {
+    try {
+      const backupData = createBackup();
+      const fileName = await createBackupFile(backupData);
+      
+      Alert.alert(
+        'Backup Created',
+        `Backup file has been created successfully!\n\nFile: ${fileName.includes('/') ? fileName.split('/').pop() : fileName}\nData: ${backupData.data.products.length} products, ${backupData.data.orders.length} orders, ${backupData.data.customers.length} customers`
+      );
+    } catch (error) {
+      console.error('Backup error:', error);
+      Alert.alert(
+        'Backup Failed',
+        error instanceof Error ? error.message : 'Failed to create backup'
+      );
+    }
+  };
+
+  const handleRestore = async () => {
+    Alert.alert(
+      'Restore Data',
+      'This will replace all current data with the backup data. This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Continue',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const backupData = await selectAndReadBackupFile();
+              
+              if (!validateBackup(backupData)) {
+                Alert.alert('Invalid Backup', 'The selected file is not a valid backup file.');
+                return;
+              }
+              
+              const info = getBackupInfo(backupData);
+              
+              Alert.alert(
+                'Confirm Restore',
+                `Restore data from backup?\n\nBackup Date: ${info.date}\nVersion: ${info.version}\n\nData to restore:\n• ${info.productsCount} products\n• ${info.ordersCount} orders\n• ${info.customersCount} customers${info.hasUser ? '\n• User settings' : ''}`,
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Restore',
+                    style: 'destructive',
+                    onPress: async () => {
+                      try {
+                        await restoreFromBackup(backupData);
+                        Alert.alert(
+                          'Restore Complete',
+                          'Data has been successfully restored from backup!'
+                        );
+                      } catch (error) {
+                        console.error('Restore error:', error);
+                        Alert.alert(
+                          'Restore Failed',
+                          error instanceof Error ? error.message : 'Failed to restore backup'
+                        );
+                      }
+                    }
+                  }
+                ]
+              );
+            } catch (error) {
+              console.error('File selection error:', error);
+              if (error instanceof Error && error.message !== 'File selection cancelled') {
+                Alert.alert(
+                  'File Error',
+                  error.message === 'Invalid backup file format' 
+                    ? 'The selected file is not a valid backup file.'
+                    : 'Failed to read the backup file. Please try again.'
+                );
+              }
+            }
           }
         }
       ]
@@ -90,10 +172,27 @@ export default function ProfileScreen() {
 
         <View style={styles.divider} />
 
+        <View style={styles.sectionHeader}>
+          <Database size={20} color="#D4A574" />
+          <Text style={styles.sectionTitle}>Data Management</Text>
+        </View>
+
+        <Pressable style={styles.menuItem} onPress={handleBackup}>
+          <Download size={24} color="#27AE60" />
+          <Text style={[styles.menuText, { color: '#27AE60' }]}>Create Backup</Text>
+        </Pressable>
+
+        <Pressable style={styles.menuItem} onPress={handleRestore}>
+          <Upload size={24} color="#3498DB" />
+          <Text style={[styles.menuText, { color: '#3498DB' }]}>Restore from Backup</Text>
+        </Pressable>
+
         <Pressable style={styles.menuItem} onPress={handleResetData}>
           <RotateCcw size={24} color="#F39C12" />
           <Text style={[styles.menuText, { color: '#F39C12' }]}>Reset All Data</Text>
         </Pressable>
+        
+        <View style={styles.divider} />
         
         <Pressable style={styles.menuItem} onPress={handleLogout}>
           <LogOut size={24} color="#E74C3C" />
@@ -102,6 +201,9 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.footer}>
+        <Text style={styles.footerText}>
+          💾 Use backup to save your data before major changes
+        </Text>
         <Text style={styles.footerText}>
           Data is automatically saved and will persist between app updates
         </Text>
@@ -147,6 +249,18 @@ const styles = StyleSheet.create({
   menu: {
     paddingHorizontal: 20,
     flex: 1,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#D4A574',
   },
   menuItem: {
     flexDirection: 'row',
@@ -213,5 +327,6 @@ const styles = StyleSheet.create({
     color: '#6B5B73',
     textAlign: 'center',
     fontStyle: 'italic',
+    marginBottom: 4,
   },
 });
