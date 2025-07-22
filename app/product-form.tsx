@@ -42,7 +42,7 @@ export default function ProductFormScreen() {
 
     const priceNum = parseFloat(price);
     if (isNaN(priceNum) || priceNum <= 0) {
-      Alert.alert('Invalid Price', 'Please enter a valid price');
+      Alert.alert('Invalid Price', 'Please enter a valid price in UGX');
       return;
     }
 
@@ -107,14 +107,14 @@ export default function ProductFormScreen() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Price ($)</Text>
+            <Text style={styles.inputLabel}>Price (UGX)</Text>
             <TextInput
               style={styles.input}
               value={price}
               onChangeText={setPrice}
-              placeholder="0.00"
+              placeholder="0"
               placeholderTextColor="#6B5B73"
-              keyboardType="decimal-pad"
+              keyboardType="numeric"
             />
           </View>
 

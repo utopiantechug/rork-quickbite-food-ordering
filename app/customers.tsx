@@ -4,6 +4,7 @@ import { router, Stack } from 'expo-router';
 import { useState, useMemo } from 'react';
 import { useBakeryStore } from '@/store/bakery-store';
 import { Customer } from '@/types';
+import { formatCurrencyShort } from '@/utils/currency';
 
 export default function CustomersScreen() {
   const { customers } = useBakeryStore();
@@ -56,12 +57,12 @@ export default function CustomersScreen() {
           <Text style={styles.statLabel}>Orders</Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={styles.statNumber}>${customer.totalSpent.toFixed(0)}</Text>
+          <Text style={styles.statNumber}>{formatCurrencyShort(customer.totalSpent)}</Text>
           <Text style={styles.statLabel}>Spent</Text>
         </View>
         <View style={styles.statItem}>
           <Text style={styles.statNumber}>
-            {customer.lastOrderDate ? customer.lastOrderDate.toLocaleDateString() : 'Never'}
+            {customer.lastOrderDate ? customer.lastOrderDate.toLocaleDateString('en-UG') : 'Never'}
           </Text>
           <Text style={styles.statLabel}>Last Order</Text>
         </View>
@@ -89,7 +90,7 @@ export default function CustomersScreen() {
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statNumber}>
-              ${customers.reduce((sum, c) => sum + c.totalSpent, 0).toFixed(0)}
+              {formatCurrencyShort(customers.reduce((sum, c) => sum + c.totalSpent, 0))}
             </Text>
             <Text style={styles.statLabel}>Total Revenue</Text>
           </View>
@@ -170,7 +171,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   statNumber: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: '#D4A574',
     marginBottom: 4,
@@ -278,5 +279,16 @@ const styles = StyleSheet.create({
   },
   statItem: {
     alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#D4A574',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#6B5B73',
+    fontWeight: '500',
   },
 });

@@ -6,6 +6,7 @@ import { Image } from 'expo-image';
 import { useBakeryStore } from '@/store/bakery-store';
 import { Product, CartItem } from '@/types';
 import { DatePicker } from '@/components/DatePicker';
+import { formatCurrency } from '@/utils/currency';
 
 export default function OrderFormScreen() {
   const { products, addOrder } = useBakeryStore();
@@ -125,7 +126,7 @@ export default function OrderFormScreen() {
         <Image source={{ uri: product.image }} style={styles.productImage} />
         <View style={styles.productInfo}>
           <Text style={styles.productName}>{product.name}</Text>
-          <Text style={styles.productPrice}>${product.price.toFixed(2)}</Text>
+          <Text style={styles.productPrice}>{formatCurrency(product.price)}</Text>
         </View>
         <Pressable
           style={styles.addButton}
@@ -143,7 +144,7 @@ export default function OrderFormScreen() {
       <Image source={{ uri: item.product.image }} style={styles.orderItemImage} />
       <View style={styles.orderItemInfo}>
         <Text style={styles.orderItemName}>{item.product.name}</Text>
-        <Text style={styles.orderItemPrice}>${item.product.price.toFixed(2)}</Text>
+        <Text style={styles.orderItemPrice}>{formatCurrency(item.product.price)}</Text>
       </View>
       <View style={styles.quantityControls}>
         <Pressable
@@ -249,7 +250,7 @@ export default function OrderFormScreen() {
               scrollEnabled={false}
             />
             <View style={styles.totalContainer}>
-              <Text style={styles.totalLabel}>Total: ${getTotal().toFixed(2)}</Text>
+              <Text style={styles.totalLabel}>Total: {formatCurrency(getTotal())}</Text>
             </View>
           </View>
         )}

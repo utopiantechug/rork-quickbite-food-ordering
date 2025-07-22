@@ -5,10 +5,11 @@ import * as Print from 'expo-print';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Order } from '@/types';
+import { formatCurrency } from '@/utils/currency';
 
 const generateInvoiceHTML = (order: Order): string => {
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString('en-UG', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -17,7 +18,7 @@ const generateInvoiceHTML = (order: Order): string => {
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
+    return date.toLocaleTimeString('en-UG', {
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -155,7 +156,7 @@ const generateInvoiceHTML = (order: Order): string => {
       <div class="invoice">
         <div class="header">
           <div class="bakery-name">Golden Crust Bakery</div>
-          <div class="bakery-subtitle">Artisan Bakery</div>
+          <div class="bakery-subtitle">Artisan Bakery - Kampala, Uganda</div>
           <div class="invoice-title">INVOICE</div>
         </div>
 
@@ -201,8 +202,8 @@ const generateInvoiceHTML = (order: Order): string => {
                 <tr>
                   <td>${item.product.name}</td>
                   <td class="qty">${item.quantity}</td>
-                  <td class="price">$${item.product.price.toFixed(2)}</td>
-                  <td class="total">$${(item.product.price * item.quantity).toFixed(2)}</td>
+                  <td class="price">${formatCurrency(item.product.price)}</td>
+                  <td class="total">${formatCurrency(item.product.price * item.quantity)}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -213,7 +214,7 @@ const generateInvoiceHTML = (order: Order): string => {
           <div style="font-size: 20px; font-weight: 600; color: #2D1810; margin-bottom: 10px;">
             Total Amount:
           </div>
-          <div class="total-amount">$${order.total.toFixed(2)}</div>
+          <div class="total-amount">${formatCurrency(order.total)}</div>
         </div>
 
         <div class="footer">
@@ -260,10 +261,12 @@ export const shareViaWhatsApp = async (order: Order) => {
     const pdfUri = await generatePDF(order);
     const phoneNumber = order.customerPhone.replace(/[^\d]/g, '');
     
-    // Format phone number for WhatsApp
+    // Format phone number for WhatsApp (Uganda country code +256)
     let formattedPhone = phoneNumber;
-    if (!phoneNumber.startsWith('1') && phoneNumber.length === 10) {
-      formattedPhone = '1' + phoneNumber;
+    if (phoneNumber.startsWith('0')) {
+      formattedPhone = '256' + phoneNumber.substring(1);
+    } else if (!phoneNumber.startsWith('256')) {
+      formattedPhone = '256' + phoneNumber;
     }
     
     if (Platform.OS === 'web') {
@@ -324,13 +327,14 @@ Your order is ready for pickup. Please find the invoice attached.
 
 Order Details:
 - Invoice #: INV-${order.id}
-- Total Amount: $${order.total.toFixed(2)}
-- Delivery Date: ${order.deliveryDate.toLocaleDateString()}
+- Total Amount: ${formatCurrency(order.total)}
+- Delivery Date: ${order.deliveryDate.toLocaleDateString('en-UG')}
 
 We appreciate your business!
 
 Best regards,
-Golden Crust Bakery Team`;
+Golden Crust Bakery Team
+Kampala, Uganda`;
     
     if (Platform.OS === 'web') {
       // For web, download the PDF and open email client
@@ -411,7 +415,7 @@ export const shareInvoice = async (order: Order) => {
 // Legacy text sharing functions (keeping as backup)
 export const generateInvoiceText = (order: Order): string => {
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString('en-UG', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -420,44 +424,70 @@ export const generateInvoiceText = (order: Order): string => {
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
+    return date.toLocaleTimeString('en-UG', {
       hour: '2-digit',
       minute: '2-digit'
     });
   };
 
-  let invoiceText = `🥖 GOLDEN CRUST BAKERY - INVOICE 🥖\n\n`;
-  invoiceText += `Invoice #: INV-${order.id}\n`;
-  invoiceText += `Order Date: ${formatDate(order.orderDate)} at ${formatTime(order.orderDate)}\n`;
-  invoiceText += `Delivery Date: ${formatDate(order.deliveryDate)}\n`;
-  invoiceText += `Status: ✅ Ready for Pickup\n\n`;
+  let invoiceText = `🥖 GOLDEN CRUST BAKERY - INVOICE 🥖
+Kampala, Uganda
+
+`;
+  invoiceText += `Invoice #: INV-${order.id}
+`;
+  invoiceText += `Order Date: ${formatDate(order.orderDate)} at ${formatTime(order.orderDate)}
+`;
+  invoiceText += `Delivery Date: ${formatDate(order.deliveryDate)}
+`;
+  invoiceText += `Status: ✅ Ready for Pickup
+
+`;
   
-  invoiceText += `📋 CUSTOMER DETAILS:\n`;
-  invoiceText += `Name: ${order.customerName}\n`;
-  invoiceText += `Phone: ${order.customerPhone}\n`;
-  invoiceText += `Email: ${order.customerEmail}\n\n`;
+  invoiceText += `📋 CUSTOMER DETAILS:
+`;
+  invoiceText += `Name: ${order.customerName}
+`;
+  invoiceText += `Phone: ${order.customerPhone}
+`;
+  invoiceText += `Email: ${order.customerEmail}
+
+`;
   
-  invoiceText += `🛒 ORDER ITEMS:\n`;
-  invoiceText += `${'─'.repeat(40)}\n`;
+  invoiceText += `🛒 ORDER ITEMS:
+`;
+  invoiceText += `${'─'.repeat(40)}
+`;
   
   order.items.forEach((item, index) => {
     const itemTotal = item.product.price * item.quantity;
-    invoiceText += `${index + 1}. ${item.product.name}\n`;
-    invoiceText += `   Qty: ${item.quantity} × $${item.product.price.toFixed(2)} = $${itemTotal.toFixed(2)}\n\n`;
+    invoiceText += `${index + 1}. ${item.product.name}
+`;
+    invoiceText += `   Qty: ${item.quantity} × ${formatCurrency(item.product.price)} = ${formatCurrency(itemTotal)}
+
+`;
   });
   
-  invoiceText += `${'─'.repeat(40)}\n`;
-  invoiceText += `💰 TOTAL AMOUNT: $${order.total.toFixed(2)}\n`;
-  invoiceText += `${'─'.repeat(40)}\n\n`;
+  invoiceText += `${'─'.repeat(40)}
+`;
+  invoiceText += `💰 TOTAL AMOUNT: ${formatCurrency(order.total)}
+`;
+  invoiceText += `${'─'.repeat(40)}
+
+`;
   
-  invoiceText += `🎉 Thank you for choosing Golden Crust Bakery!\n`;
-  invoiceText += `Your order is ready for pickup.\n`;
+  invoiceText += `🎉 Thank you for choosing Golden Crust Bakery!
+`;
+  invoiceText += `Your order is ready for pickup.
+`;
   
   if (order.estimatedTime) {
-    invoiceText += `Preparation time: ${order.estimatedTime}\n`;
+    invoiceText += `Preparation time: ${order.estimatedTime}
+`;
   }
   
-  invoiceText += `\nWe appreciate your business! 🙏`;
+  invoiceText += `
+We appreciate your business! 🙏`;
   
   return invoiceText;
 };

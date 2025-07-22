@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useBakeryStore } from '@/store/bakery-store';
 import { Order } from '@/types';
 import { shareViaWhatsApp, shareViaEmail, shareInvoice } from '@/utils/invoice-sharing';
+import { formatCurrency } from '@/utils/currency';
 
 const ORDER_TABS = [
   { id: 'all', label: 'All Orders' },
@@ -66,11 +67,15 @@ export default function AdminScreen() {
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString('en-UG', {
       weekday: 'short',
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  const formatDateTime = (date: Date) => {
+    return `${date.toLocaleDateString('en-UG')} ${date.toLocaleTimeString('en-UG')}`;
   };
 
   const filteredOrders = getFilteredOrders();
@@ -102,9 +107,9 @@ export default function AdminScreen() {
       </View>
 
       <View style={styles.orderFooter}>
-        <Text style={styles.total}>${order.total.toFixed(2)}</Text>
+        <Text style={styles.total}>{formatCurrency(order.total)}</Text>
         <Text style={styles.orderDate}>
-          {order.orderDate.toLocaleDateString()} {order.orderDate.toLocaleTimeString()}
+          {formatDateTime(order.orderDate)}
         </Text>
       </View>
 
@@ -459,7 +464,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#E8E8E8',
   },
   total: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: '#D4A574',
   },

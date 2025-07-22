@@ -3,6 +3,7 @@ import { ArrowLeft, User, Mail, Phone, Calendar, DollarSign, Package } from 'luc
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useBakeryStore } from '@/store/bakery-store';
 import { OrderCard } from '@/components/OrderCard';
+import { formatCurrency } from '@/utils/currency';
 
 export default function CustomerDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -65,7 +66,7 @@ export default function CustomerDetailsScreen() {
               <View style={styles.contactInfo}>
                 <Calendar size={16} color="#6B5B73" />
                 <Text style={styles.contactText}>
-                  Last order: {customer.lastOrderDate.toLocaleDateString()}
+                  Last order: {customer.lastOrderDate.toLocaleDateString('en-UG')}
                 </Text>
               </View>
             )}
@@ -80,12 +81,12 @@ export default function CustomerDetailsScreen() {
           </View>
           <View style={styles.statCard}>
             <DollarSign size={24} color="#D4A574" />
-            <Text style={styles.statNumber}>${customer.totalSpent.toFixed(2)}</Text>
+            <Text style={styles.statNumber}>{formatCurrency(customer.totalSpent)}</Text>
             <Text style={styles.statLabel}>Total Spent</Text>
           </View>
           <View style={styles.statCard}>
             <DollarSign size={24} color="#D4A574" />
-            <Text style={styles.statNumber}>${getAverageOrderValue().toFixed(2)}</Text>
+            <Text style={styles.statNumber}>{formatCurrency(getAverageOrderValue())}</Text>
             <Text style={styles.statLabel}>Avg Order</Text>
           </View>
         </View>
@@ -174,11 +175,12 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   statNumber: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '700',
     color: '#2D1810',
     marginTop: 8,
     marginBottom: 4,
+    textAlign: 'center',
   },
   statLabel: {
     fontSize: 12,

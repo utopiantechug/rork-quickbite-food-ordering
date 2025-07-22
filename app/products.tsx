@@ -4,6 +4,7 @@ import { router, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { useBakeryStore } from '@/store/bakery-store';
 import { Product } from '@/types';
+import { formatCurrency } from '@/utils/currency';
 
 export default function ProductsScreen() {
   const { products, deleteProduct } = useBakeryStore();
@@ -40,7 +41,7 @@ export default function ProductsScreen() {
           {product.description}
         </Text>
         <View style={styles.productMeta}>
-          <Text style={styles.productPrice}>${product.price.toFixed(2)}</Text>
+          <Text style={styles.productPrice}>{formatCurrency(product.price)}</Text>
           <Text style={styles.productCategory}>{product.category}</Text>
         </View>
         <View style={styles.productStatus}>
@@ -198,7 +199,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   productPrice: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: '#D4A574',
   },

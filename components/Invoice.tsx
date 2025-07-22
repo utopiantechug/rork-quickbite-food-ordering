@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Order } from '@/types';
+import { formatCurrency } from '@/utils/currency';
 
 interface InvoiceProps {
   order: Order;
@@ -8,7 +9,7 @@ interface InvoiceProps {
 
 export function Invoice({ order }: InvoiceProps) {
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString('en-UG', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -17,7 +18,7 @@ export function Invoice({ order }: InvoiceProps) {
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
+    return date.toLocaleTimeString('en-UG', {
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -28,7 +29,7 @@ export function Invoice({ order }: InvoiceProps) {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.bakeryName}>Golden Crust Bakery</Text>
-        <Text style={styles.bakerySubtitle}>Artisan Bakery</Text>
+        <Text style={styles.bakerySubtitle}>Artisan Bakery - Kampala, Uganda</Text>
         <Text style={styles.invoiceTitle}>INVOICE</Text>
       </View>
 
@@ -73,8 +74,8 @@ export function Invoice({ order }: InvoiceProps) {
           <View key={index} style={styles.itemRow}>
             <Text style={[styles.itemText, styles.itemName]}>{item.product.name}</Text>
             <Text style={[styles.itemText, styles.itemQty]}>{item.quantity}</Text>
-            <Text style={[styles.itemText, styles.itemPrice]}>${item.product.price.toFixed(2)}</Text>
-            <Text style={[styles.itemText, styles.itemTotal]}>${(item.product.price * item.quantity).toFixed(2)}</Text>
+            <Text style={[styles.itemText, styles.itemPrice]}>{formatCurrency(item.product.price)}</Text>
+            <Text style={[styles.itemText, styles.itemTotal]}>{formatCurrency(item.product.price * item.quantity)}</Text>
           </View>
         ))}
       </View>
@@ -83,7 +84,7 @@ export function Invoice({ order }: InvoiceProps) {
       <View style={styles.totalSection}>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total Amount:</Text>
-          <Text style={styles.totalAmount}>${order.total.toFixed(2)}</Text>
+          <Text style={styles.totalAmount}>{formatCurrency(order.total)}</Text>
         </View>
       </View>
 

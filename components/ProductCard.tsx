@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
 import { StyleSheet, Text, View } from 'react-native';
 import { Product } from '@/types';
+import { formatCurrency } from '@/utils/currency';
 
 interface ProductCardProps {
   product: Product;
@@ -16,7 +17,7 @@ export function ProductCard({ product }: ProductCardProps) {
           {product.description}
         </Text>
         <View style={styles.footer}>
-          <Text style={styles.price}>${product.price.toFixed(2)}</Text>
+          <Text style={styles.price}>{formatCurrency(product.price)}</Text>
           <View style={[
             styles.statusBadge,
             { backgroundColor: product.available ? '#27AE60' : '#E74C3C' }
@@ -69,7 +70,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   price: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: '#D4A574',
   },

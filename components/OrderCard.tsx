@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Order } from '@/types';
+import { formatCurrency } from '@/utils/currency';
 
 interface OrderCardProps {
   order: Order;
@@ -23,11 +24,18 @@ const statusLabels = {
 
 export function OrderCard({ order }: OrderCardProps) {
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString('en-UG', {
       weekday: 'short',
       year: 'numeric',
       month: 'short',
       day: 'numeric'
+    });
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-UG', {
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
@@ -41,7 +49,7 @@ export function OrderCard({ order }: OrderCardProps) {
       </View>
       
       <Text style={styles.date}>
-        Ordered: {order.orderDate.toLocaleDateString()} at {order.orderDate.toLocaleTimeString()}
+        Ordered: {formatDate(order.orderDate)} at {formatTime(order.orderDate)}
       </Text>
       
       <Text style={styles.deliveryDate}>
@@ -61,7 +69,7 @@ export function OrderCard({ order }: OrderCardProps) {
           <Text style={styles.customer}>{order.customerName}</Text>
           <Text style={styles.customerEmail}>{order.customerEmail}</Text>
         </View>
-        <Text style={styles.total}>${order.total.toFixed(2)}</Text>
+        <Text style={styles.total}>{formatCurrency(order.total)}</Text>
       </View>
       
       {order.estimatedTime && (
@@ -144,7 +152,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   total: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: '#D4A574',
   },
