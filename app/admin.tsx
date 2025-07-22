@@ -108,36 +108,7 @@ export default function AdminScreen() {
         </Text>
       </View>
 
-      {/* Share Invoice Section - Only show for ready orders */}
-      {order.status === 'ready' && (
-        <View style={styles.shareSection}>
-          <Text style={styles.shareTitle}>Share Invoice:</Text>
-          <View style={styles.shareButtons}>
-            <Pressable
-              style={[styles.shareButton, styles.whatsappButton]}
-              onPress={() => handleShareInvoice(order, 'whatsapp')}
-            >
-              <MessageCircle size={16} color="#fff" />
-              <Text style={styles.shareButtonText}>WhatsApp</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.shareButton, styles.emailButton]}
-              onPress={() => handleShareInvoice(order, 'email')}
-            >
-              <Mail size={16} color="#fff" />
-              <Text style={styles.shareButtonText}>Email</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.shareButton, styles.generalButton]}
-              onPress={() => handleShareInvoice(order, 'general')}
-            >
-              <Share size={16} color="#fff" />
-              <Text style={styles.shareButtonText}>Share</Text>
-            </Pressable>
-          </View>
-        </View>
-      )}
-
+      {/* Action buttons first */}
       <View style={styles.actionButtons}>
         {order.status === 'pending' && (
           <>
@@ -174,6 +145,36 @@ export default function AdminScreen() {
           </Pressable>
         )}
       </View>
+
+      {/* Share Invoice Section - Show for ready orders */}
+      {order.status === 'ready' && (
+        <View style={styles.shareSection}>
+          <Text style={styles.shareTitle}>📄 Share Invoice with Customer:</Text>
+          <View style={styles.shareButtons}>
+            <Pressable
+              style={[styles.shareButton, styles.whatsappButton]}
+              onPress={() => handleShareInvoice(order, 'whatsapp')}
+            >
+              <MessageCircle size={16} color="#fff" />
+              <Text style={styles.shareButtonText}>WhatsApp</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.shareButton, styles.emailButton]}
+              onPress={() => handleShareInvoice(order, 'email')}
+            >
+              <Mail size={16} color="#fff" />
+              <Text style={styles.shareButtonText}>Email</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.shareButton, styles.generalButton]}
+              onPress={() => handleShareInvoice(order, 'general')}
+            >
+              <Share size={16} color="#fff" />
+              <Text style={styles.shareButtonText}>Share</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
     </View>
   );
 
@@ -211,6 +212,12 @@ export default function AdminScreen() {
               {orders.filter(o => o.status === 'preparing').length}
             </Text>
             <Text style={styles.statLabel}>Preparing</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>
+              {orders.filter(o => o.status === 'ready').length}
+            </Text>
+            <Text style={styles.statLabel}>Ready</Text>
           </View>
         </View>
 
@@ -285,12 +292,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    gap: 12,
+    gap: 8,
   },
   statCard: {
     flex: 1,
     backgroundColor: '#fff',
-    padding: 16,
+    padding: 12,
     borderRadius: 12,
     alignItems: 'center',
     shadowColor: '#000',
@@ -300,15 +307,16 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   statNumber: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
     color: '#D4A574',
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6B5B73',
     fontWeight: '500',
+    textAlign: 'center',
   },
   tabsContainer: {
     flexDirection: 'row',
@@ -459,53 +467,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6B5B73',
   },
-  shareSection: {
-    marginBottom: 16,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E8E8E8',
-  },
-  shareTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2D1810',
-    marginBottom: 8,
-  },
-  shareButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  shareButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    gap: 4,
-  },
-  whatsappButton: {
-    backgroundColor: '#25D366',
-  },
-  emailButton: {
-    backgroundColor: '#4285F4',
-  },
-  generalButton: {
-    backgroundColor: '#6B5B73',
-  },
-  shareButtonText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
   actionButtons: {
     flexDirection: 'row',
     gap: 8,
+    marginBottom: 12,
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 8,
     alignItems: 'center',
@@ -523,6 +492,45 @@ const styles = StyleSheet.create({
     backgroundColor: '#95A5A6',
   },
   actionButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  shareSection: {
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E8E8E8',
+  },
+  shareTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2D1810',
+    marginBottom: 12,
+  },
+  shareButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  shareButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    gap: 4,
+  },
+  whatsappButton: {
+    backgroundColor: '#25D366',
+  },
+  emailButton: {
+    backgroundColor: '#4285F4',
+  },
+  generalButton: {
+    backgroundColor: '#6B5B73',
+  },
+  shareButtonText: {
     color: '#fff',
     fontSize: 12,
     fontWeight: '600',
