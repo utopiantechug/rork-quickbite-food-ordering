@@ -1,17 +1,27 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import { Order } from '@/types';
 import { formatCurrency } from '@/utils/currency';
 
-// Configure notification behavior
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+// Check if we're running in Expo Go
+const isExpoGo = Constants.appOwnership === 'expo';
+
+// Configure notification behavior only if not in Expo Go
+if (!isExpoGo) {
+  try {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+      }),
+    });
+  } catch (error) {
+    console.warn('Failed to configure notification handler:', error);
+  }
+}
 
 export interface NotificationPermissions {
   granted: boolean;
@@ -31,6 +41,16 @@ export const requestNotificationPermissions = async (): Promise<NotificationPerm
           status: permission as any,
         };
       }
+      return {
+        granted: false,
+        canAskAgain: false,
+        status: 'denied' as any,
+      };
+    }
+
+    // Check if running in Expo Go
+    if (isExpoGo) {
+      console.warn('Push notifications are not supported in Expo Go. Use a development build for full notification support.');
       return {
         granted: false,
         canAskAgain: false,
@@ -88,6 +108,15 @@ export const checkNotificationPermissions = async (): Promise<NotificationPermis
       };
     }
 
+    // Check if running in Expo Go
+    if (isExpoGo) {
+      return {
+        granted: false,
+        canAskAgain: false,
+        status: 'denied' as any,
+      };
+    }
+
     const { status } = await Notifications.getPermissionsAsync();
     return {
       granted: status === 'granted',
@@ -131,8 +160,8 @@ export const sendNewOrderNotification = async (order: Order): Promise<void> => {
           },
         });
       }
-    } else {
-      // For mobile, use expo-notifications
+    } else if (!isExpoGo) {
+      // For mobile, use expo-notifications (only if not in Expo Go)
       await Notifications.scheduleNotificationAsync({
         content: {
           title,
@@ -147,6 +176,9 @@ export const sendNewOrderNotification = async (order: Order): Promise<void> => {
         },
         trigger: null, // Show immediately
       });
+    } else {
+      // Fallback for Expo Go - just log the notification
+      console.log(`📱 New Order Notification: ${title} - ${body}`);
     }
   } catch (error) {
     console.error('Error sending new order notification:', error);
@@ -190,7 +222,7 @@ export const sendOrderStatusNotification = async (
           },
         });
       }
-    } else {
+    } else if (!isExpoGo) {
       await Notifications.scheduleNotificationAsync({
         content: {
           title,
@@ -208,6 +240,9 @@ export const sendOrderStatusNotification = async (
         },
         trigger: null,
       });
+    } else {
+      // Fallback for Expo Go - just log the notification
+      console.log(`📱 Order Status Notification: ${title} - ${body}`);
     }
   } catch (error) {
     console.error('Error sending order status notification:', error);
@@ -216,8 +251,8 @@ export const sendOrderStatusNotification = async (
 
 export const setupNotificationCategories = async (): Promise<void> => {
   try {
-    if (Platform.OS === 'web') {
-      // Web doesn't need categories setup
+    if (Platform.OS === 'web' || isExpoGo) {
+      // Web doesn't need categories setup, and Expo Go doesn't support them
       return;
     }
 
@@ -287,8 +322,9 @@ export const handleNotificationResponse = (response: Notifications.NotificationR
 
 export const clearAllNotifications = async (): Promise<void> => {
   try {
-    if (Platform.OS === 'web') {
+    if (Platform.OS === 'web' || isExpoGo) {
       // Web notifications are automatically managed by the browser
+      // Expo Go doesn't support notification management
       return;
     }
 
@@ -300,8 +336,8 @@ export const clearAllNotifications = async (): Promise<void> => {
 
 export const getBadgeCount = async (): Promise<number> => {
   try {
-    if (Platform.OS === 'web') {
-      return 0; // Web doesn't support badge count
+    if (Platform.OS === 'web' || isExpoGo) {
+      return 0; // Web doesn't support badge count, neither does Expo Go
     }
 
     return await Notifications.getBadgeCountAsync();
@@ -313,8 +349,8 @@ export const getBadgeCount = async (): Promise<number> => {
 
 export const setBadgeCount = async (count: number): Promise<void> => {
   try {
-    if (Platform.OS === 'web') {
-      return; // Web doesn't support badge count
+    if (Platform.OS === 'web' || isExpoGo) {
+      return; // Web doesn't support badge count, neither does Expo Go
     }
 
     await Notifications.setBadgeCountAsync(count);

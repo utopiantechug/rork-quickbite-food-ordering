@@ -33,23 +33,28 @@ export const useNotifications = () => {
           await setupNotificationCategories();
         }
 
-        // Set up notification listeners (mobile only)
-        if (Platform.OS !== 'web') {
-          // Listen for notifications received while app is foregrounded
-          notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-            console.log('Notification received:', notification);
-          });
+        // Set up notification listeners (mobile only, not in Expo Go)
+        if (Platform.OS !== 'web' && !permissions.granted && permissions.canAskAgain) {
+          // Only set up listeners if we have proper notification support
+          try {
+            // Listen for notifications received while app is foregrounded
+            notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+              console.log('Notification received:', notification);
+            });
 
-          // Listen for user interactions with notifications
-          responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-            handleNotificationResponse(response);
-            
-            // Navigate to admin screen when notification is tapped
-            const { orderId } = response.notification.request.content.data || {};
-            if (orderId && currentUser) {
-              router.push('/admin');
-            }
-          });
+            // Listen for user interactions with notifications
+            responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+              handleNotificationResponse(response);
+              
+              // Navigate to admin screen when notification is tapped
+              const { orderId } = response.notification.request.content.data || {};
+              if (orderId && currentUser) {
+                router.push('/admin');
+              }
+            });
+          } catch (error) {
+            console.warn('Failed to set up notification listeners:', error);
+          }
         }
 
         console.log('Notifications initialized successfully');

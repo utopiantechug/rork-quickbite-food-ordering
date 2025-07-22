@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, Switch, Alert } from 'react-native';
-import { Bell, BellOff, Settings } from 'lucide-react-native';
+import { Bell, BellOff, Settings, Info } from 'lucide-react-native';
+import Constants from 'expo-constants';
 import { 
   checkNotificationPermissions, 
   requestNotificationPermissions,
   NotificationPermissions 
 } from '@/utils/notifications';
+
+const isExpoGo = Constants.appOwnership === 'expo';
 
 export function NotificationSettings() {
   const [permissions, setPermissions] = useState<NotificationPermissions>({
@@ -29,6 +32,15 @@ export function NotificationSettings() {
   };
 
   const handleToggleNotifications = async () => {
+    if (isExpoGo) {
+      Alert.alert(
+        'Expo Go Limitation',
+        'Push notifications are not supported in Expo Go. To use notifications, you need to create a development build of your app.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     if (permissions.granted) {
       Alert.alert(
         'Disable Notifications',
@@ -75,33 +87,44 @@ export function NotificationSettings() {
 
   return (
     <View style={styles.container}>
+      {isExpoGo && (
+        <View style={styles.warningBanner}>
+          <Info size={20} color="#F39C12" />
+          <Text style={styles.warningText}>
+            Push notifications are not supported in Expo Go. Use a development build for full notification support.
+          </Text>
+        </View>
+      )}
+      
       <View style={styles.header}>
         <View style={styles.iconContainer}>
           {permissions.granted ? (
             <Bell size={24} color="#27AE60" />
           ) : (
-            <BellOff size={24} color="#E74C3C" />
+            <BellOff size={24} color={isExpoGo ? "#95A5A6" : "#E74C3C"} />
           )}
         </View>
         <View style={styles.headerText}>
           <Text style={styles.title}>Order Notifications</Text>
           <Text style={styles.subtitle}>
-            {permissions.granted 
-              ? 'Get notified about new orders and status updates'
-              : 'Enable notifications to stay updated on orders'
+            {isExpoGo 
+              ? 'Notifications are not available in Expo Go'
+              : permissions.granted 
+                ? 'Get notified about new orders and status updates'
+                : 'Enable notifications to stay updated on orders'
             }
           </Text>
         </View>
         <Switch
           value={permissions.granted}
           onValueChange={handleToggleNotifications}
-          disabled={isLoading}
+          disabled={isLoading || isExpoGo}
           trackColor={{ false: '#E8E8E8', true: '#27AE60' }}
           thumbColor={permissions.granted ? '#fff' : '#f4f3f4'}
         />
       </View>
 
-      {!permissions.granted && permissions.canAskAgain && (
+      {!permissions.granted && permissions.canAskAgain && !isExpoGo && (
         <Pressable 
           style={styles.enableButton} 
           onPress={handleToggleNotifications}
@@ -115,10 +138,17 @@ export function NotificationSettings() {
       )}
 
       <View style={styles.infoSection}>
-        <Text style={styles.infoTitle}>You'll be notified when:</Text>
+        <Text style={styles.infoTitle}>
+          {isExpoGo ? 'Notifications would notify you when:' : 'You\'ll be notified when:'}
+        </Text>
         <Text style={styles.infoItem}>• New orders are placed</Text>
         <Text style={styles.infoItem}>• Orders are ready for pickup</Text>
         <Text style={styles.infoItem}>• Order status changes</Text>
+        {isExpoGo && (
+          <Text style={styles.infoNote}>
+            Note: In Expo Go, notifications are logged to the console instead.
+          </Text>
+        )}
       </View>
     </View>
   );
@@ -189,5 +219,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B5B73',
     marginBottom: 4,
+  },
+  warningBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF9E7',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    gap: 8,
+  },
+  warningText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#D68910',
+    lineHeight: 18,
+  },
+  infoNote: {
+    fontSize: 12,
+    color: '#95A5A6',
+    fontStyle: 'italic',
+    marginTop: 8,
   },
 });
